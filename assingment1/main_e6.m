@@ -7,12 +7,8 @@ clear, close, clc;
 %% Geometria con terne calcolate a mano
 % lunghezza in decimetri 
 
-i = [1; 0; 0];
-j = [0; 1; 0];
-k = [0; 0; 1];
-
 figure
-T_o = tFactory([i, j, k], [0 0 0]');
+T_o = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 0]');
 plotFrame(T_o), hold on, axis equal
 
 o_T_a = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 1.75]');

@@ -101,15 +101,15 @@ YPR = [pi/3; pi/2; pi/4];
 err_q34 = testYPRToRot(YPR)
 
 % since gimbal lock was detected -> plot frame
-R = YPRToRot(YPR)
+R = YPRToRot(YPR);
 
 YPR_test = RotToYPR(R);
 R_test = YPRToRot(YPR_test);
 
 figure, 
 subplot(1,2,1)
-dispFrame(R), hold on
-dispFrame(R_test), grid on, axis equal
+plotFrame(R), hold on
+plotFrame(R_test), grid on, axis equal
 
 % --- Q3.5 ---
 YPR = [0; pi/2; -pi/12];
@@ -122,8 +122,8 @@ YPR_test = RotToYPR(R);
 R_test = YPRToRot(YPR_test);
 
 subplot(1,2,2)
-dispFrame(R), hold on
-dispFrame(R_test), grid on, axis equal
+plotFrame(R), hold on
+plotFrame(R_test), grid on, axis equal
 
 % INTERESTING ASPECT: the two results are the same
 % In case of gimbal lock, the first (yaw) and last (roll) rotations both 
@@ -135,9 +135,11 @@ YPR_q35 = [0; pi/2; -pi/12];
 YPR_q34_prime = [YPR_q34(1) - YPR_q34(3); pi/2; 0];
 YPR_q35_prime = [YPR_q35(1) - YPR_q35(3); pi/2; 0];
 
-diff = mod(YPR_q34_prime(1) - YPR_q35_prime(1), 2*pi)
+diff = mod(abs(YPR_q34_prime(1) - YPR_q35_prime(1)), 2*pi);
+    % w/ small negative value (i.e -1e-17) mod returns 6.2831 which is
+    % exacly 2*pi
 
-if abs(diff) < 1e-10
+if kEq(diff, 0)
     disp("The two rotation matrices are the same")
 end
 %% 1.4 Rot to Euler
@@ -173,7 +175,6 @@ R = [0          -sqrt(2)/2  sqrt(2)/2; ...
 err_q44 = testRotToYPR(R)
 
 %% 1.5 Rot to angle-axis with eigenvectors
-clc;
 
 % --- Q5.1 ---
 R = [1 0 0; 0 0 -1; 0 1 0];
