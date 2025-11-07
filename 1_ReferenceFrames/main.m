@@ -95,6 +95,10 @@ YPR_q44 = RotToYPR(R)
 % gimbal lock detected
 
 %% 1.5 Rot to angle-axis with eigenvectors
+% [!] Attention, since the eigenvector can be scaled for any real lambda,
+% negative and positive, this methods do not make distintion between [-avt]
+% and [+avt], thus, it is not suitable for this applcation w/out additional
+% checks. The use of RotToAngleAxis() is suggested
 
 % --- Q5.1 ---
 R = [1 0 0; 0 0 -1; 0 1 0];
@@ -129,8 +133,3 @@ for i = 1:3
 end
 
 theta_star_q52 = acos((trace(R)-1)/2)
-
-% [!] Attention, since the eigenvector can be scaled for any real lambda,
-% negative and positive, this methods do not make distintion between [-avt]
-% and [+avt], thus, it is not suitable for this applcation w/out additional
-% checks. The use of RotToAngleAxis() is suggested

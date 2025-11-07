@@ -142,6 +142,34 @@ diff = mod(abs(YPR_q34_prime(1) - YPR_q35_prime(1)), 2*pi);
 if kEq(diff, 0)
     disp("The two rotation matrices are the same")
 end
+
+%% Frame rotation visualization
+clear, clc;
+close all; 
+
+t0 = eye(3);
+
+YPR_q34 = [pi/3; pi/2; pi/4];
+
+figure
+subplot(2, 3, 1), plotFrame(Rx(YPR_q34(3))*t0), axis equal
+subplot(2, 3, 1), plotFrame(t0, ["r--" "g--" "b--"])
+
+subplot(2, 3, 2), plotFrame(Ry(YPR_q34(2))*Rx(YPR_q34(3))*t0), axis equal
+subplot(2, 3, 2), plotFrame(Rx(YPR_q34(3))*t0, ["r--" "g--" "b--"])
+
+subplot(2, 3, 3), plotFrame(Rz(YPR_q34(1))*Ry(YPR_q34(2))*Rx(YPR_q34(3))*t0), axis equal
+subplot(2, 3, 3), plotFrame(Ry(YPR_q34(2))*Rx(YPR_q34(3))*t0, ["r--" "g--" "b--"])
+
+YPR_q35 = [0; pi/2; -pi/12];
+subplot(2, 3, 4), plotFrame(Rx(YPR_q35(3))*t0), axis equal
+subplot(2, 3, 4), plotFrame(t0, ["r--" "g--" "b--"])
+
+subplot(2, 3, 5), plotFrame(Ry(YPR_q35(2))*Rx(YPR_q35(3))*t0), axis equal
+subplot(2, 3, 5), plotFrame(Rx(YPR_q35(3))*t0, ["r--" "g--" "b--"])
+
+subplot(2, 3, 6), plotFrame(Rz(YPR_q35(1))*Ry(YPR_q35(2))*Rx(YPR_q35(3))*t0), axis equal
+subplot(2, 3, 6), plotFrame(Ry(YPR_q35(2))*Rx(YPR_q35(3))*t0, ["r--" "g--" "b--"])
 %% 1.4 Rot to Euler
 function s = testRotToYPR(R)
     if isRot(R)
