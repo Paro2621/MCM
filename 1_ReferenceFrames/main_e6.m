@@ -8,35 +8,35 @@ clear, close, clc;
 % lunghezza in decimetri 
 
 figure
-T_o = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 0]');
-plotFrame(T_o), hold on, axis equal
+To = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 0]');
+plotFrame(To, '<0>'), hold on, axis equal
 
-o_T_a = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 1.75]');
-plotFrame(T_o*o_T_a)
+oTa = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 1.75]');
+plotFrame(oTa, '<1>')
 
-a_T_b = tFactory([-1 0 0; 0 0 1; 0 1 0]', [0 0 0.98]');
-plotFrame(T_o*o_T_a*a_T_b),
+aTb = tFactory([-1 0 0; 0 0 1; 0 1 0]', [0 0 0.98]');
+plotFrame(oTa*aTb, '<2>')
 
-b_T_c = tFactory([0 0 -1; 0 1 0; 1 0 0]', [1.05 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c),
+bTc = tFactory([0 0 -1; 0 1 0; 1 0 0]', [1.05 0 0]');
+plotFrame(oTa*aTb*bTc, '<3>')
 
-c_T_cp = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 3.265]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_cp, ["--r", "--g", "--b"]),
+cTcp = tFactory([1 0 0; 0 1 0; 0 0 1]', [0 0 3.265]');
+% plotFrame(oTa*aTb*bTc*cTcp, '<3*>', ["--r", "--g", "--b"])
 
-cp_T_d = tFactory([0 0 -1; 0 -1 0; -1 0 0]', [0 1.455 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_cp*cp_T_d),
+cpTd = tFactory([0 0 -1; 0 -1 0; -1 0 0]', [0 1.455 0]');
+plotFrame(oTa*aTb*bTc*cTcp*cpTd, '<4>')
 
-d_T_e = tFactory([0 -1 0; 0 0 -1; 1 0 0]', [0.35 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_cp*cp_T_d*d_T_e),
+dTe = tFactory([0 -1 0; 0 0 -1; 1 0 0]', [0.35 0 0]');
+plotFrame(oTa*aTb*bTc*cTcp*cpTd*dTe, '<5>')
 
-e_T_f = tFactory([0 0 1; 1 0 0; 0 1 0]', [0 0 3.85]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_cp*cp_T_d*d_T_e*e_T_f),
+eTf = tFactory([0 0 1; 1 0 0; 0 1 0]', [0 0 3.85]');
+plotFrame(oTa*aTb*bTc*cTcp*cpTd*dTe*eTf, '<6>')
 
-f_T_g = tFactory([0 1 0; 0 0 1; 1 0 0]', [1.53 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_cp*cp_T_d*d_T_e*e_T_f*f_T_g),
+fTg = tFactory([0 1 0; 0 0 1; 1 0 0]', [1.53 0 0]');
+plotFrame(oTa*aTb*bTc*cTcp*cpTd*dTe*eTf*fTg, '<7>'),
 view([-14.10 10.69])
 
-T_o*o_T_a*a_T_b*b_T_c*c_T_cp*cp_T_d*d_T_e*e_T_f*f_T_g
+oTa*aTb*bTc*cTcp*cpTd*dTe*eTf*fTg;
 
 %% w/out intermediate step
 % the results are the same as before but now enfathizing the fact that the
@@ -47,29 +47,29 @@ y = [0 1 0]';
 z = [0 0 1]';
 
 figure
-T_o = tFactory([x y z], [0 0 0]');
-plotFrame(T_o), hold on, axis equal
+To = tFactory([x y z], [0 0 0]');
+plotFrame(To), hold on, axis equal
 
-o_T_a = tFactory([x y z], [0 0 1.75]');
-plotFrame(T_o*o_T_a)
+oTa = tFactory([x y z], [0 0 1.75]');
+plotFrame(To*oTa)
 
-a_T_b = tFactory([-x z y], [0 0 0.98]');
-plotFrame(T_o*o_T_a*a_T_b),
+aTb = tFactory([-x z y], [0 0 0.98]');
+plotFrame(To*oTa*aTb),
 
-b_T_c = tFactory([-z y x], [1.05 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c),
+bTc = tFactory([-z y x], [1.05 0 0]');
+plotFrame(To*oTa*aTb*bTc),
 
 c_T_d = tFactory([-z -y -x], [0 1.455 3.265]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_d),
+plotFrame(To*oTa*aTb*bTc*c_T_d),
 
-d_T_e = tFactory([-y -z x], [0.35 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_d*d_T_e),
+dTe = tFactory([-y -z x], [0.35 0 0]');
+plotFrame(To*oTa*aTb*bTc*c_T_d*dTe),
 
-e_T_f = tFactory([z x y], [0 0 3.85]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_d*d_T_e*e_T_f),
+eTf = tFactory([z x y], [0 0 3.85]');
+plotFrame(To*oTa*aTb*bTc*c_T_d*dTe*eTf),
 
-f_T_g = tFactory([y z x], [1.53 0 0]');
-plotFrame(T_o*o_T_a*a_T_b*b_T_c*c_T_d*d_T_e*e_T_f*f_T_g),
+fTg = tFactory([y z x], [1.53 0 0]');
+plotFrame(To*oTa*aTb*bTc*c_T_d*dTe*eTf*fTg),
 view([-14.10 10.69])
 
 %% Geometria in notazione DH

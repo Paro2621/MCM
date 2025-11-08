@@ -1,5 +1,5 @@
-function plotFrame(T, c)
-    if nargin == 1
+function plotFrame(T, name, c)
+    if nargin == 2
         c = ["r" "g" "b"];
     end
 
@@ -13,7 +13,9 @@ function plotFrame(T, c)
 
     for i = 1:3
         quiver3(p(1),   p(2),   p(3), ...
-                R(1,i), R(2,i), R(3,i), c(i))
+                R(1,i), R(2,i), R(3,i), ... 
+                c(i), 'LineWidth', 1.5)
+        text(p(1), p(2), p(3)-0.1, name)
         hold on
     end
 end
