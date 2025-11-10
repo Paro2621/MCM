@@ -1,0 +1,35 @@
+function [h,theta] = RotToAngleAxis(R)
+    % Given a rotation matrix this function
+    % should output the equivalent angle-axis representation values,
+    % respectively 'theta' (angle), 'h' (axis)
+    % Check that R is a valid rotation matrix using IsRotationMatrix()
+
+    if isRot(R) == false
+        disp("ERROR: R is not rotation matrix")
+    else
+        theta = acos((trace(R)-1)/2);
+
+        if kEq(theta, 0)
+            h = [0; 0; 0];
+        elseif kEq(theta, pi)
+            ii = find(diag(R)+1>0)
+            
+            h_x = sqrt((R(1,1)+1)/2);
+            h_y = sqrt((R(2,2)+1)/2);
+            h_z = sqrt((R(3,3)+1)/2);
+
+            if ii == 1
+                h = [h_x; sign(R(1,2))*h_y; sign(R(1,3))*h_z];
+            elseif ii = 2
+                h = [sign(R(1,2))*h_x; h_y; sign(R(1,3))*h_z];
+            else
+                h = [sign(R(1,2))*h_x; sign(R(1,2))*h_y; h_z];
+            end
+
+            
+        else
+            sk_h = (R - R')/(2*sin(theta));
+            h = vex(sk_h);
+        end
+    end
+end

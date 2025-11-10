@@ -3,8 +3,8 @@ function R = YPRToRot(v, theta, phi)
     % convention, given psi, theta, phi.
     % Input:
     % psi angle around z axis (yaw)
-    % theta angle around y axis (theta)
-    % phi angle around x axis (phi)
+    % theta angle around y axis (pitch)
+    % phi angle around x axis (roll)
     % Output:
     % R rotation matrix
 

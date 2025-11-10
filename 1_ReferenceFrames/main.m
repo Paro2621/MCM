@@ -10,13 +10,13 @@ clear, close, clc;
 h = [1; 0; 0];
 theta = deg2rad(90);
 
-R_q11 = AngleAxisToRot(h, theta)
+R_q12 = AngleAxisToRot(h, theta)
 
 % --- Q1.3 ---
 h = [0; 0; 1];
 theta = pi/3;
 
-R_q12 = AngleAxisToRot(h, theta)
+R_q13 = AngleAxisToRot(h, theta)
 
 % --- Q1.4 ---
 rho = [-pi/3; -pi/6; pi/3];
@@ -24,7 +24,7 @@ rho = [-pi/3; -pi/6; pi/3];
 theta = norm(rho);
 h = rho/theta;
 
-R_q13 = AngleAxisToRot(h, theta)
+R_q14 = AngleAxisToRot(h, theta)
 
 %% 1.2 Rot to angle-axis
 
