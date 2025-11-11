@@ -124,10 +124,10 @@ R = 1/9 * [4 -4 -7; 8 1 4; -1 -8 4];
 
 [V,D] = eig(R);
 V = real(V);
-D = real(D);
+D = diag(real(D));
 
 for i = 1:3
-    if kEq(D(i, i), 1)
+    if kEq(D(i), 1)
         h_star_q52 = V(:, i)
     end
 end
