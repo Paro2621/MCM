@@ -62,11 +62,25 @@ R_q33 = YPRToRot(YPR)
 % --- Q3.4 ---
 YPR_q34 = [pi/3; pi/2; pi/4];
 R_q34 = YPRToRot(YPR_q34)
+
+theta = atan2(-R_q34(3,1), sqrt(R_q34(1,1)^2 + R_q34(2,1)^2));
+
+if kEq(cos(theta), 0)
+    disp("WARNING: gimbal lock detected")
+end
+
 % [!] GIMBAL LOCK DETECTED
 
 % --- Q3.5 ---
 YPR_q35 = [0; pi/2; -pi/12];
 R_q35 = YPRToRot(YPR_q35)
+
+theta = atan2(-R_q35(3,1), sqrt(R_q35(1,1)^2 + R_q35(2,1)^2));
+
+if kEq(cos(theta), 0)
+    disp("WARNING: gimbal lock detected")
+end
+
 % [!] GIMBAL LOCK DETECTED
 
 % NOTE: R_q35 and R_q34 are the same! 
@@ -92,7 +106,6 @@ R = [0          -sqrt(2)/2  sqrt(2)/2; ...
     -sqrt(3)/2  sqrt(2)/4   sqrt(2)/4];
 
 YPR_q44 = RotToYPR(R)
-% gimbal lock detected
 
 %% 1.5 Rot to angle-axis with eigenvectors
 % [!] Attention, since the eigenvector can be scaled for any real lambda,

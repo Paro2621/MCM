@@ -12,7 +12,7 @@ function [h,theta] = RotToAngleAxis(R)
         if kEq(theta, 0)
             h = [0; 0; 0];
         elseif kEq(theta, pi)
-            ii = find(diag(R)+1>0);
+             ii = find(diag(R)+1>0);
             
             h_x = sqrt((R(1,1)+1)/2);
             h_y = sqrt((R(2,2)+1)/2);

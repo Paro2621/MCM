@@ -10,7 +10,7 @@ function YPR = RotToYPR(R)
     theta = atan2(-R(3,1), sqrt(R(1,1)^2 + R(2,1)^2));
 
     if kEq(cos(theta), 0)
-        % Gimbal lock: θ ≈ ±π/2
+        % Gimbal lock: θ = [+/-] pi/2
         disp("WARNING: gimbal lock detected")
 
         psi   = atan2(-R(1,2), R(2,2));  % arbitrary but consistent
