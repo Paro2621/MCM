@@ -2,14 +2,48 @@
 clc;
 close all;
 clear;
-addpath('include'); % put relevant functions inside the /include folder 
+
+addpath('include');
+addpath('utils');
+addpath('utils/plot');
+addpath('utils/factory');
+
+%% ric's version - DH standard
+DHp = @(q)...
+    [0.105          q(1)    0   0; ...
+     0.11           0       0   -pi/2; ...
+     0              q(2)    0   0;...           # extraFrame
+     0              q(3)    0   pi/2; ...
+     0.425          0    0   -pi/2; ...
+     0              q(4)    0   0;...           # extraFrame
+     0              q(5)    0   pi/2; ...
+     0.095 + q(6)   0       0   0;...
+     0.355          q(7)    0   0];
+
+T_EE = tFactory(eye(3), [0 0 0.155]');
+
+% joint variable: 
+% [!] ATTENTION q(6) is traslational
+q0 = deg2rad([0 0 0 0 0 0 0]); % [deg] -> [rad]
+q0(6) = 0; % [m]
+
+% plot
+figure
+plotDH(DHp(q0), T_EE, 'std'); title("RoboticArm\_p0");
+view([30, 30])
+
+% pose 1
+figure
+q1 = [pi/4, -pi/4, 0, -pi/4, 0, 0.15, pi/4];
+T_EE_0 = plotDH(DHp(q1), T_EE, 'std'), title("RoboticArm\_p1");
+view([30, 30])
 
 %% Compute the geometric model for the given manipulator
 iTj_0 = BuildTree();
 disp('iTj_0')
 disp(iTj_0);
 jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prismatic.
-geometricModel = geometricModel(iTj_0,jointType);
+geometricModel = geometricModel(iTj_0, jointType);
 
 %% Q1.3
 
@@ -34,8 +68,9 @@ show_simulation = true;
 % Set initial and final joint positions
 qf = [5*pi/12, -pi/3, 0, -pi/4, 0, 0.18, pi/5];
 
-%%%%%%%%%%%%% SIMULATION LOOP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Simulation loop
 % Simulation variables
+
 % simulation time definition 
 samples = 100;
 t_start = 0.0;
@@ -54,9 +89,7 @@ qSteps =[linspace(qi(1),qf(1),samples)', ...
     linspace(qi(6),qf(6),samples)', ...
     linspace(qi(7),qf(7),samples)'];
 
-% LOOP 
 for i = 1:samples
-
     brij= zeros(3,geometricModel.jointNumber);
     q = qSteps(i,1:geometricModel.jointNumber)';
     % Updating transformation matrices for the new configuration 
@@ -64,7 +97,7 @@ for i = 1:samples
     % Get the transformation matrix from base to the tool
     bTe = geometricModel.getTransformWrtBase(length(jointType)); 
 
-    %% ... Plot the motion of the robot 
+    % Plot the motion of the robot 
     if (rem(i,0.1) == 0) % only every 0.1 sec
         for j=1:geometricModel.jointNumber
             bTi(:,:,j) = geometricModel.getTransformWrtBase(j); 

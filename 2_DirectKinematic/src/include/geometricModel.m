@@ -29,6 +29,7 @@ classdef geometricModel < handle
                 error('Not enough input arguments (iTj_0) (jointType)')
             end
         end
+
         function updateDirectGeometry(self, q)
             %%% GetDirectGeometryFunction
             % This method update the matrices iTj.
@@ -41,6 +42,7 @@ classdef geometricModel < handle
             
             %TO DO
         end
+        
         function [bTk] = getTransformWrtBase(self,k)
             %% GetTransformatioWrtBase function
             % Inputs :
