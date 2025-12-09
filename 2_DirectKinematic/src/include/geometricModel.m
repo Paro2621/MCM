@@ -28,6 +28,9 @@ classdef geometricModel < handle
             else
                 error('Not enough input arguments (iTj_0) (jointType)')
             end
+
+            % [~, a] = size([1 2 3 4])
+
         end
 
         function updateDirectGeometry(self, q)
@@ -37,21 +40,30 @@ classdef geometricModel < handle
             % q : joints current position ;
 
             % The function updates:
-            % - iTj: vector of matrices containing the transformation matrices from link i to link j for the input q.
+            % iTj: vector of matrices containing the transformation matrices from link i to link j for the input q.
             % The size of iTj is equal to (4,4,numberOfLinks)
-            
-            %TO DO
+
+            for i = 1:self.jointNumber
+                if self.jointType(i) == 0
+                    self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(Rz(q(i)), [0; 0; 0]);
+                else
+                    self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(eye(3), [0; 0; q(i)]);
+                end
+            end
         end
         
         function [bTk] = getTransformWrtBase(self,k)
-            %% GetTransformatioWrtBase function
+            %%% GetTransformatioWrtBase function
             % Inputs :
             % k: the idx for which computing the transformation matrix
             % outputs
             % bTk : transformation matrix from the manipulator base to the k-th joint in
             % the configuration identified by iTj.
-
-            %TO DO
+                
+            bTk = eye(4);
+            for i = k+1:-1:1
+                bTk = self.iTj(:, :, i)*bTk;
+            end
         end
 
     end
