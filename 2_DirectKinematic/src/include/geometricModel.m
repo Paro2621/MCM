@@ -28,9 +28,6 @@ classdef geometricModel < handle
             else
                 error('Not enough input arguments (iTj_0) (jointType)')
             end
-
-            % [~, a] = size([1 2 3 4])
-
         end
 
         function updateDirectGeometry(self, q)
@@ -45,9 +42,12 @@ classdef geometricModel < handle
 
             for i = 1:self.jointNumber
                 if self.jointType(i) == 0
-                    self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(Rz(q(i)), [0; 0; 0]);
+                    self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(Rz(q(i)), [0; 0; 0]);
+                    % self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(Rz(q(i)), [0; 0; 0]);
+                
                 else
-                    self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(eye(3), [0; 0; q(i)]);
+                    self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(eye(3), [0; 0; q(i)]);
+                    % self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(eye(3), [0; 0; q(i)]);
                 end
             end
         end
@@ -61,7 +61,7 @@ classdef geometricModel < handle
             % the configuration identified by iTj.
                 
             bTk = eye(4);
-            for i = k+1:-1:1
+            for i = k:-1:1
                 bTk = self.iTj(:, :, i)*bTk;
             end
         end
