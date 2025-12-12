@@ -26,20 +26,20 @@ classdef kinematicModel < handle
             % The function returns:
             % bJi
             
-            fwdGeo = [self.gm.iTj(:, :, 1)];
-            
-            for i = 2:linkNumber
-                fwdGeo(:, :, i) = fwdGeo(:, :, i-1)*self.gm.iTj(:, :, i);
+            for i = 1:self.gm.jointNumber
+                fwdGeo(:, :, i) = self.gm.getTransformWrtBase(i);
             end
 
             bJi  = [];
+            
+            r_end = fwdGeo(1:3, 4, end);
 
             % all the other joints
             for i = 1:linkNumber
-                currentFrame = fwdGeo(:, :, i);
+                currentFrame = fwdGeo(:, :, i); % wrt base
 
                 k_i = currentFrame(1:3, 3);
-                r_i = fwdGeo(1:3, 4, end) - currentFrame(1:3, 4);
+                r_i = r_end - currentFrame(1:3, 4);
 
                 if self.gm.jointType(i) == 0        % revolute
                     J_i = [k_i; cross(k_i, r_i)];
@@ -57,10 +57,33 @@ classdef kinematicModel < handle
         end
 
         function updateJacobian(self)
-            %%% Update Jacobian function
-            % The function update:
+            %%% Update Jacobian function 
+            % The function update: 
             % - J: end-effector jacobian matrix
-            self.J = self.getJacobianOfLinkWrtBase(self.gm.jointNumber);
+            
+            J_wrtB = self.getJacobianOfLinkWrtBase(self.gm.jointNumber);
+        
+            % Base -> last link
+            b_T_n = self.gm.getTransformWrtBase(self.gm.jointNumber);
+        
+            % Last link -> EE
+            n_T_e = tFactory(eye(3), [0 0 0.06]');
+        
+            % Base -> EE
+            b_T_e = b_T_n * n_T_e;
+        
+            % Inverse tran  sform (EE -> Base) for twist transformation
+            e_T_b = invert(b_T_e);
+        
+            R = e_T_b(1:3, 1:3);
+            p = e_T_b(1:3, 4);
+            s = skew(p);
+        
+            Ad = [R, zeros(3,3); s * R, R];
+        
+            % Jacobian expressed in the EE frame
+            self.J = Ad * J_wrtB;
+        
         end
     end
 end
