@@ -1,7 +1,5 @@
 %% Template Exam Modelling and Control of Manipulators
-clc;
-close all;
-clear;
+clc; close all; clear;
 
 addpath('include');
 addpath('utils');
@@ -16,7 +14,7 @@ jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prism
 geometricModel = geometricModel(iTj_0, jointType);
 
 %% Q1.3
-clc
+clc;
 
 % b_T_e
 T_be = geometricModel.getTransformWrtBase(7)
@@ -28,10 +26,6 @@ T_26 = invert(T_b2)*T_b6;
 
 % --- check ---
 T_b6_new = T_b2*T_26
-
-% --- last year ---
-T_26p = T_b6 - T_b2;
-T_b6_old = T_b2*T_26p
 
 %% Q1.4 Simulation
 % Given the following configurations compute the Direct Geometry for the manipulator
@@ -95,9 +89,7 @@ end
 pm.plotFinalConfig(bTi)
 
 %% Q1.5
-clc;
-close all;
-clear;
+clc; close all; clear;
 
 addpath('include');
 addpath('utils');
@@ -122,9 +114,7 @@ km.updateJacobian();
 km.J
 
 %% Q1.7
-clc;
-close all;
-clear;
+clc; close all; clear;
 
 addpath('include');
 addpath('utils');
@@ -154,9 +144,12 @@ velocities_wrtEE = J_wrtEE*qi_dot
 % TODO: create a function for the adjoint (also considering rotation)
 
 %% TEST Demo - IK
-clc;
-close all;
-clear;
+% this is a small experiment w/ inverse kinematic. 
+
+% NOTE: the operator \ in matlab already implementrs, for non square 
+% matrices, the pseudoinverse 
+
+clc; close all; clear;
 
 addpath('include');
 addpath('utils');
@@ -180,8 +173,8 @@ show_simulation = 1;
 % simulation time definition 
 samples = 10;
 t_start = 0.0;
-t_end = 1.0;
-dt = 1e-2;
+t_end = 2.0;
+dt = 1e-1;
 t = t_start:dt:t_end; 
 
 pm = plotManipulators(show_simulation);
@@ -192,17 +185,27 @@ qSteps = [];
 for t = t_start:dt:t_end
     km.updateJacobian();
 
-    J_wrtBase = km.getJacobianOfLinkWrtBase(7)
-    J_wrtEE = km.J
+    J_wrtBase = km.getJacobianOfLinkWrtBase(7);
+    J_wrtEE = km.J;
+    
+    % targetv = [omega_x omega_y omega_z vx vy vz]
 
-    qi_dot = J_wrtEE\[0 0 0.5 0 0 0]';
+    % complete control
+    % qi_dot = J_wrtBase\[0 0 0 0 0 0.5]';
+
+    % translation only
+    % qi_dot = J_wrtBase(4:6, :)\[0.5 0 0]';
+        
+    % rotation only
+    qi_dot = J_wrtEE(1:3, :)\[0 0 0.5]';
+
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
     qSteps(i, :) = qi;
     i = i+1;
 end
 
-qSteps = qSteps(ceil(linspace(1, length(qSteps)-1, 15)), :)
+qSteps = qSteps(ceil(linspace(1, length(qSteps)-1, 15)), :);
 
 for i = 1:samples
     brij= zeros(3,gm.jointNumber);

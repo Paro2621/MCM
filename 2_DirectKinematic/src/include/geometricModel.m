@@ -62,7 +62,6 @@ classdef geometricModel < handle
                 bTk = self.iTj(:, :, i)*bTk;
             end
         end
-
     end
 end
 
