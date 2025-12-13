@@ -16,18 +16,21 @@ function [iTj_0] = BuildTree()
     k = [0 0 1]';
     
     iTj_0(:, :, 1) = tFactory([i j k], k.*0.105);   % <1>
-    
-    iTj_0(:, :, 2) = tFactory([i -k j], k.*0.110);  % <2>
-    
-    iTj_0(:, :, 3) = tFactory([i k -j], -j.*0.100); % <3>
-    
-    iTj_0(:, :, 4) = tFactory([i -k j], k.*0.325);  % <4>
-    
-    iTj_0(:, :, 5) = tFactory([i k -j], -j.*0.095); % <5>
-    
+    iTj_0(:, :, 2) = tFactory([k i j], k.*0.110);  % <2>
+    iTj_0(:, :, 3) = tFactory([j k i], i.*0.100); % <3>
+    iTj_0(:, :, 4) = tFactory([k i j], k.*0.325);  % <4>
+    iTj_0(:, :, 5) = tFactory([j k i], i.*0.095); % <5>
     iTj_0(:, :, 6) = tFactory([i j k], k.*0.095);   % <6>
-    
     iTj_0(:, :, 7) = tFactory([i j k], k.*0.355);   % <7> = <EE>
+
+    % BUILDTREE - DH standard
+    % iTj_0(:, :, 1) = tFactory([i j k], k.*0.105);   % <1>
+    % iTj_0(:, :, 2) = tFactory([i -k j], k.*0.110);  % <2>
+    % iTj_0(:, :, 3) = tFactory([i k -j], -j.*0.100); % <3>
+    % iTj_0(:, :, 4) = tFactory([i -k j], k.*0.325);  % <4>
+    % iTj_0(:, :, 5) = tFactory([i k -j], -j.*0.095); % <5>
+    % iTj_0(:, :, 6) = tFactory([i j k], k.*0.095);   % <6>
+    % iTj_0(:, :, 7) = tFactory([i j k], k.*0.355);   % <7> = <EE>
 
 end
 

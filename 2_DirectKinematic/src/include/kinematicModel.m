@@ -60,19 +60,15 @@ classdef kinematicModel < handle
             %%% Update Jacobian function 
             % The function update: 
             % - J: end-effector jacobian matrix
-            
+
             J_wrtB = self.getJacobianOfLinkWrtBase(self.gm.jointNumber);
         
-            % Base -> last link
-            b_T_n = self.gm.getTransformWrtBase(self.gm.jointNumber);
-        
-            % Last link -> EE
-            n_T_e = tFactory(eye(3), [0 0 0.06]');
-        
             % Base -> EE
+            b_T_n = self.gm.getTransformWrtBase(self.gm.jointNumber);
+            n_T_e = tFactory(eye(3), [0 0 0.06]');
             b_T_e = b_T_n * n_T_e;
-        
-            % Inverse tran  sform (EE -> Base) for twist transformation
+         
+            % Inverse transform (EE -> Base) for twist transformation
             e_T_b = invert(b_T_e);
         
             R = e_T_b(1:3, 1:3);

@@ -43,11 +43,8 @@ classdef geometricModel < handle
             for i = 1:self.jointNumber
                 if self.jointType(i) == 0
                     self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(Rz(q(i)), [0; 0; 0]);
-                    % self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(Rz(q(i)), [0; 0; 0]);
-                
                 else
                     self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(eye(3), [0; 0; q(i)]);
-                    % self.iTj(:, :, i+1) = self.iTj_0(:, :, i+1)*tFactory(eye(3), [0; 0; q(i)]);
                 end
             end
         end

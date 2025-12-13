@@ -16,15 +16,22 @@ jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prism
 geometricModel = geometricModel(iTj_0, jointType);
 
 %% Q1.3
+clc
 
 % b_T_e
 T_be = geometricModel.getTransformWrtBase(7)
 
 % 6_T_2
 T_b2 = geometricModel.getTransformWrtBase(2);
-T_b6 = geometricModel.getTransformWrtBase(6);
-T_26 = invertHTM(T_b2)*T_b6;
-T_26 = invertHTM(T_26)
+T_b6 = geometricModel.getTransformWrtBase(6)
+T_26 = invert(T_b2)*T_b6;
+
+% --- check ---
+T_b6_new = T_b2*T_26
+
+% --- last year ---
+T_26p = T_b6 - T_b2;
+T_b6_old = T_b2*T_26p
 
 %% Q1.4 Simulation
 % Given the following configurations compute the Direct Geometry for the manipulator
@@ -66,7 +73,7 @@ qSteps =[linspace(qi(1),qf(1),samples)', ...
     linspace(qi(4),qf(4),samples)', ...
     linspace(qi(5),qf(5),samples)', ...
     linspace(qi(6),qf(6),samples)', ...
-    linspace(qi(7),qf(7),samples)']
+    linspace(qi(7),qf(7),samples)'];
 
 for i = 1:samples
     brij= zeros(3,geometricModel.jointNumber);
@@ -146,7 +153,7 @@ velocities_wrtEE = J_wrtEE*qi_dot
 % TODO: consider when the base has a velocity (linear or angular)
 % TODO: create a function for the adjoint (also considering rotation)
 
-%% TEST
+%% TEST Demo - IK
 clc;
 close all;
 clear;
@@ -188,7 +195,7 @@ for t = t_start:dt:t_end
     J_wrtBase = km.getJacobianOfLinkWrtBase(7)
     J_wrtEE = km.J
 
-    qi_dot = J_wrtBase\[0 0 0 0.2 0 0]';
+    qi_dot = J_wrtEE\[0 0 0.5 0 0 0]';
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
     qSteps(i, :) = qi;
@@ -211,11 +218,11 @@ for i = 1:samples
     if (rem(i,0.1) == 0) % only every 0.1 sec
         for j=1:gm.jointNumber
             bTi(:,:,j) = gm.getTransformWrtBase(j); 
+            plotFrame(bTi(:,:,j), ' ')
         end
         pm.plotIter(bTi)
-        plotFrame(bTi(:,:,end), ' ')
     end
 end
 
-pm.plotFinalConfig(bTi)
+% pm.plotFinalConfig(bTi)
 
