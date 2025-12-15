@@ -21,11 +21,14 @@ T_be = geometricModel.getTransformWrtBase(7)
 
 % 6_T_2
 T_b2 = geometricModel.getTransformWrtBase(2);
-T_b6 = geometricModel.getTransformWrtBase(6)
+T_b6 = geometricModel.getTransformWrtBase(6);
 T_26 = invert(T_b2)*T_b6;
+T_62 = T_b2*invert(T_b6)
 
 % --- check ---
-T_b6_new = T_b2*T_26
+if kEq(T_b6, T_b2*T_26)
+    disp("T_b6 is equal to T_b2*T_26")
+end
 
 %% Q1.4 Simulation
 % Given the following configurations compute the Direct Geometry for the manipulator
@@ -46,7 +49,7 @@ disp(bTe)
 show_simulation = true;
 
 % Set initial and final joint positions
-qf = [5*pi/12, -pi/3, 0, -pi/4, 0, 0.18, pi/5];
+qf = [5*pi/12, -pi/4, 0, -pi/4, 0, 0.18, pi/5];
 
 % Simulation loop
 % Simulation variables
@@ -103,7 +106,7 @@ disp(iTj_0);
 jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prismatic.
 geometricModel = geometricModel(iTj_0, jointType);
 
-qi = [5*pi/12, -pi/3, 0, -pi/4, 0, 0.18, pi/5];
+qi = [5*pi/12, -pi/5, 0, -pi/4, 0, 0.18, pi/5];
 geometricModel.updateDirectGeometry(qi)
 
 km = kinematicModel(geometricModel);
@@ -197,7 +200,7 @@ for t = t_start:dt:t_end
     % qi_dot = J_wrtBase(4:6, :)\[0.5 0 0]';
         
     % rotation only
-    qi_dot = J_wrtEE(1:3, :)\[0 0 0.5]';
+    qi_dot = J_wrtBase(1:3, :)\[0 0 3]';
 
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
