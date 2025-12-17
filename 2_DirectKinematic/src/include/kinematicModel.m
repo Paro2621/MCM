@@ -71,7 +71,7 @@ classdef kinematicModel < handle
             b_T_n = self.gm.getTransformWrtBase(self.gm.jointNumber);
             n_T_e = tFactory(eye(3), [0 0 0.06]');
             b_T_e = b_T_n; % * n_T_e;
-
+            
             % Inverse transform (EE -> Base) for twist transformation
             e_T_b = invert(b_T_e);
 

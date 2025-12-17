@@ -23,6 +23,7 @@ T_be = geometricModel.getTransformWrtBase(7)
 T_b2 = geometricModel.getTransformWrtBase(2);
 T_b6 = geometricModel.getTransformWrtBase(6);
 T_26 = invert(T_b2)*T_b6;
+T_62 = T_b2*invert(T_b6)
 
 T_62 = invert(T_26)
 
@@ -202,6 +203,7 @@ for t = t_start:dt:t_end
         
     % rotation only
     %qi_dot = km.J_wrtEE(1:3, :)\[0 0 2]';
+
 
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
