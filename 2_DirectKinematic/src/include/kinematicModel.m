@@ -4,14 +4,17 @@ classdef kinematicModel < handle
     % gm is a geometric model (see class geometricModel.m)
     properties
         gm  % An instance of GeometricModel
-        J   % Jacobian
+        J_wrtB   % Jacobian
+        J_wrtEE
+    
     end
 
     methods
         function self = kinematicModel(gm)  % Constructor
             if nargin > 0
                 self.gm = gm;
-                self.J = zeros(6, self.gm.jointNumber);
+                self.J_wrtB = zeros(6, self.gm.jointNumber);
+                self.J_wrtEE = zeros(6, self.gm.jointNumber);
             else
                 error('Not enough input arguments (geometricModel)')
             end
@@ -26,7 +29,7 @@ classdef kinematicModel < handle
             % The function returns:
             % bJi
             
-            for i = 1:self.gm.jointNumber
+            for i = 1:linkNumber
                 fwdGeo(:, :, i) = self.gm.getTransformWrtBase(i);
             end
 
@@ -60,25 +63,25 @@ classdef kinematicModel < handle
             %%% Update Jacobian function 
             % The function update: 
             % - J: end-effector jacobian matrix
+            
+            % Jacobian expressed in the Base frame
+            self.J_wrtB = self.getJacobianOfLinkWrtBase(self.gm.jointNumber);
 
-            J_wrtB = self.getJacobianOfLinkWrtBase(self.gm.jointNumber);
-        
             % Base -> EE
             b_T_n = self.gm.getTransformWrtBase(self.gm.jointNumber);
             n_T_e = tFactory(eye(3), [0 0 0.06]');
             b_T_e = b_T_n; % * n_T_e;
-         
+
             % Inverse transform (EE -> Base) for twist transformation
             e_T_b = invert(b_T_e);
-        
+
             R = e_T_b(1:3, 1:3);
             p = e_T_b(1:3, 4);
-            s = skew(p);
-        
-            Ad = [R, zeros(3,3); s * R, R];
-        
+            
+            Ad = [R, zeros(3,3); skew(p)*R, R];
+
             % Jacobian expressed in the EE frame
-            self.J = Ad * J_wrtB;
+            self.J_wrtEE = Ad * self.J_wrtB;
         
         end
     end

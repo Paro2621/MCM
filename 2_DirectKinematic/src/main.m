@@ -108,15 +108,15 @@ disp(iTj_0);
 jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prismatic.
 geometricModel = geometricModel(iTj_0, jointType);
 
-qi = [5*pi/12, -pi/5, 0, -pi/4, 0, 0.18, pi/5];
-geometricModel.updateDirectGeometry(qi)
+qf = [5*pi/12, -pi/4, 0, -pi/4, 0, 0.18, pi/5]
+geometricModel.updateDirectGeometry(qf)
 
 km = kinematicModel(geometricModel);
 km.getJacobianOfLinkWrtBase(6)
 
 %% Q1.6
 km.updateJacobian();
-km.J
+km.J_wrtB
 
 %% Q1.7
 clc; close all; clear;
@@ -139,9 +139,11 @@ gm.updateDirectGeometry(qi);
 
 km = kinematicModel(gm);
 km.updateJacobian();
-J_wrtEE = km.J
-J_wrtBase = km.getJacobianOfLinkWrtBase(7)
 
+J_wrtEE = km.J_wrtEE
+J_wrtBase = km.J_wrtB
+
+velocities_wrtBase = J_wrtBase*qi_dot
 velocities_wrtEE = J_wrtEE*qi_dot
     % [omega_x omega_y omega_z vx vy vx]
 
@@ -189,20 +191,17 @@ i = 1;
 qSteps = [];
 for t = t_start:dt:t_end
     km.updateJacobian();
-
-    J_wrtBase = km.getJacobianOfLinkWrtBase(7);
-    J_wrtEE = km.J;
     
     % targetv = [omega_x omega_y omega_z vx vy vz]
 
     % complete control
-    % qi_dot = J_wrtBase\[0 0 0 0 0 0.5]';
+    % qi_dot = km.J_wrtB\[0 0 0 0 0 0.5]';
 
     % translation only
-    % qi_dot = J_wrtBase(4:6, :)\[0.5 0 0]';
+    qi_dot = km.J_wrtB(4:6, :)\[0 0 0.3]';
         
     % rotation only
-    qi_dot = J_wrtBase(1:3, :)\[0 0 3]';
+    %qi_dot = km.J_wrtEE(1:3, :)\[0 0 2]';
 
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
