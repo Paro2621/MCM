@@ -2,15 +2,15 @@ function [iTj_0] = BuildTree()
     % This function should build the tree of frames for the chosen manipulator.
     % Inputs: 'None'
     % Outputs: The tree of frames.
-    
+
     % iTj_0 corresponds to the trasformation from the frame <i> to <i'> which
     % for q = 0 is equal to the trasformation from <i> to <i+1>
     % (see notes)
-    
+
     % iTj_0 is a 3-dimensional matlab matrix, suitable for defining tree of
     % frames. iTj_0 should represent the transformation matrix between the i-th and j-th
     % frames. iTj_0(row,col,joint_idx)
-    
+
     i = [1 0 0]';
     j = [0 1 0]';
     k = [0 0 1]';

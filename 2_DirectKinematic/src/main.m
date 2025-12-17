@@ -23,7 +23,6 @@ T_be = geometricModel.getTransformWrtBase(7)
 T_b2 = geometricModel.getTransformWrtBase(2);
 T_b6 = geometricModel.getTransformWrtBase(6);
 T_26 = invert(T_b2)*T_b6;
-T_62 = T_b2*invert(T_b6)
 
 T_62 = invert(T_26)
 
@@ -116,7 +115,7 @@ km.getJacobianOfLinkWrtBase(6)
 
 %% Q1.6
 km.updateJacobian();
-km.J_wrtB
+km.J_EEwrtB
 
 %% Q1.7
 clc; close all; clear;
@@ -126,7 +125,7 @@ addpath('utils');
 addpath('utils/plot');
 addpath('utils/factory');
 
-qi = [0.7 -0.1 1 -1 0 0.03 1.3];
+qi = [5*pi/12, -pi/4, 0, -pi/4, 0, 0.18, pi/5]; %[0.7 -0.1 1 -1 0 0.03 1.3];
 
 qi_dot = [0.9 0.1 -0.2 0.3 -0.8 0.5 0]';
 
