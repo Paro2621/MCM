@@ -27,7 +27,6 @@ T_62 = T_b2*invert(T_b6)
 
 T_62 = invert(T_26)
 
-
 % --- check ---
 if kEq(T_b6, T_b2*T_26)
     disp("T_b6 is equal to T_b2*T_26")
@@ -141,8 +140,8 @@ gm.updateDirectGeometry(qi);
 km = kinematicModel(gm);
 km.updateJacobian();
 
-J_wrtEE = km.J_wrtEE
-J_wrtBase = km.J_wrtB
+J_wrtEE = km.J_EEwrtEE
+J_wrtBase = km.J_EEwrtB
 
 velocities_wrtBase = J_wrtBase*qi_dot
 velocities_wrtEE = J_wrtEE*qi_dot
@@ -196,14 +195,13 @@ for t = t_start:dt:t_end
     % targetv = [omega_x omega_y omega_z vx vy vz]
 
     % complete control
-    % qi_dot = km.J_wrtB\[0 0 0 0 0 0.5]';
+    % qi_dot = km.J_EEwrtB\[0 0 0 0 0 0.5]';
 
     % translation only
-    qi_dot = km.J_wrtB(4:6, :)\[0 0 0.3]';
+    qi_dot = km.J_EEwrtB(4:6, :)\[0 0 0.3]';
         
     % rotation only
-    %qi_dot = km.J_wrtEE(1:3, :)\[0 0 2]';
-
+    %qi_dot = km.J_EEwrtEE(1:3, :)\[0 0 2]';
 
     qi = qi + qi_dot'.*dt;
     gm.updateDirectGeometry(qi);
