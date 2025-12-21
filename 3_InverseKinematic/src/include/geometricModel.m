@@ -14,54 +14,67 @@ classdef geometricModel < handle
         jointNumber
         iTj
         q
+        lastjoint_T_tool
     end
 
     methods
         % Constructor to initialize the geomModel property
-        function self = geometricModel(iTj_0,jointType)
+        function self = geometricModel(iTj_0,jointType, lastjoint_T_tool)
             if nargin > 1
                 self.iTj_0 = iTj_0;
                 self.iTj = iTj_0;
                 self.jointType = jointType;
                 self.jointNumber = length(jointType);
                 self.q = zeros(self.jointNumber,1);
+                self.lastjoint_T_tool = lastjoint_T_tool;
             else
                 error('Not enough input arguments (iTj_0) (jointType)')
             end
         end
+
         function updateDirectGeometry(self, q)
-            %% updateDirectGeometry function
+            %%% GetDirectGeometryFunction
             % This method update the matrices iTj.
             % Inputs:
             % q : joints current position ;
 
             % The function updates:
-            % - iTj: vector of matrices containing the transformation matrices from link i to link j for the input q.
+            % iTj: vector of matrices containing the transformation matrices from link i to link j for the input q.
             % The size of iTj is equal to (4,4,numberOfLinks)
-            
-            %TO DO
+
+            for i = 1:self.jointNumber
+                if self.jointType(i) == 0
+                    self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(Rz(q(i)), [0; 0; 0]);
+                else
+                    self.iTj(:, :, i) = self.iTj_0(:, :, i)*tFactory(eye(3), [0; 0; q(i)]);
+                end
+            end
         end
 
         function [bTt] = getToolTransformWrtBase(self)
-            %% getToolTransformWrtBase function
+            %%% GetTransformatioWrtBase function
             % outputs
-            % bTt : transformation matrix from the manipulator base to the
-            % tool
+            % bTt : transformation matrix from the manipulator base to the 
+            % end effector in the current [iTj] configuration.
+            
+            b_T_lastjoint = getTransformWrtBase(self,self.jointNumber);
+            bTt = b_T_lastjoint*self.lastjoint_T_tool;
 
-            %TO DO
         end
-
+        
         function [bTk] = getTransformWrtBase(self,k)
-            %% getTransformWrtBase function
+            %%% GetTransformatioWrtBase function
             % Inputs :
             % k: the idx for which computing the transformation matrix
             % outputs
             % bTk : transformation matrix from the manipulator base to the k-th joint in
             % the configuration identified by iTj.
-
-            %TO DO
+                
+            bTk = eye(4);
+            for i = k:-1:1
+                bTk = self.iTj(:, :, i)*bTk;
+            end
         end
-
     end
 end
 

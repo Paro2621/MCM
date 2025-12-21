@@ -19,7 +19,7 @@ classdef cartesianControl < handle
                 error('Not enough input arguments (cartesianControl)')
             end
         end
-        function [x_dot]=getCartesianReference(self,bTg)
+        function [x_dot] = getCartesianReference(self,bTg)
             %% getCartesianReference function
             % Inputs :
             % bTg : goal frame

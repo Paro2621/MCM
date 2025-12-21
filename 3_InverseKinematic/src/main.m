@@ -1,27 +1,29 @@
 %% Template Exam Modelling and Control of Manipulators
-clc;
+clear, clc;
 close all;
-clear;
-addpath('include'); % put relevant functions inside the /include folder 
 
-%% Compute the geometric model for the given manipulator
+addpath('include');
+addpath('utils');
+addpath('utils/plot');
+addpath('utils/factory');
+
+% Compute the geometric model for the given manipulator
 iTj_0 = BuildTree();
 
-disp('iTj_0')
-disp(iTj_0);
-jointType = [0 0 0 0 0 1 0]; % specify two possible link type: Rotational, Prismatic.
+% disp('iTj_0')
+% disp(iTj_0);
+jointType = [0 0 0 0 0 1 0];
 q = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
 
-%% Define the tool frame rigidly attached to the end-effector
+% Define the tool frame rigidly attached to the end-effector
 % Tool frame definition
-eRt = ....
-e_r_te = ...;
-eTt = ...;
+eRt = eye(3);
+e_r_te = [0 0 0]';
+eTt = tFactory(eRt, e_r_te);
 
-%% Initialize Geometric Model (GM) and Kinematic Model (KM)
-
+% Initialize Geometric Model (GM) and Kinematic Model (KM)
 % Initialize geometric model with q0
-gm = geometricModel(iTj_0,jointType,eTt);
+gm = geometricModel(iTj_0, jointType, eTt);
 
 % Update direct geoemtry given q0
 gm.updateDirectGeometry(q);
@@ -31,26 +33,40 @@ km = kinematicModel(gm);
 
 bTt = gm.getToolTransformWrtBase();
 
-disp("eTt");
-disp(eTt);
-disp('bTt q = 0');
-disp(bTt);
+% disp("eTt");
+% disp(eTt);
+% disp('bTt q = 0');
+% disp(bTt);
 
-%% Define the goal frame and initialize cartesian control
+% Define the goal frame and initialize cartesian control
 % Goal definition 
 bOg = [0.2; -0.7; 0.3];
 theta = pi/2;
-bRg = rotation(0,theta,0);
+bRg = YPRToRot([0 theta 0]);
 bTg = [bRg bOg;0 0 0 1]; 
-disp('bTg')
-disp(bTg)
+% disp('bTg')
+% disp(bTg)
 
 % control proportional gain 
-k_a = ...
-k_l = ...
+k_a = 0.8;
+k_l = 0.8;
 
 % Cartesian control initialization
-cc = cartesianControl(....);
+cc = cartesianControl(gm, k_a,k_l);
+
+% --- test aerea ---
+pm = plotManipulators(1);
+pm.initMotionPlot(0);
+
+for j=1:gm.jointNumber
+    bTi(:,:,j) = gm.getTransformWrtBase(j); 
+    plotFrame(bTi(:,:,j), ' ')
+    axis equal
+    pm.plotIter(bTi)
+end
+plotFrame(bTg, '<T>')
+
+% --- end test aera ---
 
 %% Initialize control loop 
 
