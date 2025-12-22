@@ -74,13 +74,19 @@ for ti = t
 
     for f = 1:gm.jointNumber
         
-        % complete control:     q_dot = eJb\x_dot;
-        % rotation only:        q_dot = eJb\x_dot(1:3);
-        % translation only:     q_dot = eJb(4:6, :)\x_dot(4:6);
-            
-        q_dot = eJb(4:6, :)\x_dot(4:6);
+        % Possible controlling actions
+        % translation only:     
+        %   q_dot = k_l*eJb(4:6, :)\x_dot(4:6);
+        %
+        % rotation only:        
+        %   q_dot = k_a*eJb\x_dot(1:3);
+        %
+        % complete control:     
+        %   q_dot = eJb\x_dot;
+        %   q_dot(1:3, :) = k_a*q_dot(1:3, :)
+        %   q_dot(4:6, :) = k_l*q_dot(4:6, :)
         
-        % k_a, k_l;
+        q_dot = k_l*eJb(4:6, :)\x_dot(4:6);
 
         % simulating the robot -> q = KinematicSimulation(q, q_dot, dt, q_min, q_max);
         q = q + q_dot.*dt;
@@ -119,7 +125,15 @@ show_simulation = true;
 
 % number of intermediate steps that will be plotted
 samples = 10; 
-simIdx = ceil(linspace(1, length(qSteps)-1, samples));
+
+% % linear spacing:       
+% simIdx = ceil(linspace(1, length(qSteps)-1, samples))
+
+% exponential spacing:
+idx_max = 4;    % trial-and-error, nel caso base 4 o 5 vanno bene
+idx = linspace(1, idx_max, samples);
+simIdx = [1, floor((exp(idx)/exp(idx_max))*length(qSteps))];
+
 qSteps = qSteps(:, simIdx);
 
 pm = plotManipulators(show_simulation);
