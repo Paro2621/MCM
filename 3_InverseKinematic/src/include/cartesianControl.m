@@ -19,13 +19,22 @@ classdef cartesianControl < handle
                 error('Not enough input arguments (cartesianControl)')
             end
         end
-        function [x_dot] = getCartesianReference(self,bTg)
-            %% getCartesianReference function
+        function x_dot = getCartesianReference(self,bTg)
+            % getCartesianReference function
             % Inputs :
             % bTg : goal frame
             % Outputs :
             % x_dot : cartesian reference for inverse kinematic control
             
+            bTt = self.gm.getToolTransformWrtBase();
+            rt = bTt(1:3, 4);
+            [ht,~] = RotToAngleAxis(bTt(1:3, 1:3));
+
+            rg = bTg(1:3, 4);
+            [hg,~] = RotToAngleAxis(bTg(1:3, 1:3));
+
+            x_dot = [ht-hg; rg-rt];
+
         end
     end
 end

@@ -7,112 +7,143 @@ addpath('utils');
 addpath('utils/plot');
 addpath('utils/factory');
 
-% Compute the geometric model for the given manipulator
+%% Initialize Geometric Model (GM) and Kinematic Model (KM)
 iTj_0 = BuildTree();
 
-% disp('iTj_0')
-% disp(iTj_0);
-jointType = [0 0 0 0 0 1 0];
-q = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
-
 % Define the tool frame rigidly attached to the end-effector
-% Tool frame definition
 eRt = eye(3);
 e_r_te = [0 0 0]';
 eTt = tFactory(eRt, e_r_te);
 
-% Initialize Geometric Model (GM) and Kinematic Model (KM)
-% Initialize geometric model with q0
-gm = geometricModel(iTj_0, jointType, eTt);
+% Define joints type, upper and lower bounds 
+jointType = [0 0 0 0 0 1 0];
+q_min = -3.14 * ones(7,1);  q_min(6) = 0;
+q_max = 3.14 * ones(7,1);   q_max(6) = 1;
 
-% Update direct geoemtry given q0
-gm.updateDirectGeometry(q);
-
-% Initialize the kinematic model given the goemetric model
+% Initialization of geometric and kinematic model
+gm = geometricModel(iTj_0, jointType, q_min, q_max, eTt);
 km = kinematicModel(gm);
 
-bTt = gm.getToolTransformWrtBase();
+% Display stuff
+% disp('iTj_0'); disp(iTj_0);
+% disp("eTt"); disp(eTt);
+% bTt = gm.getToolTransformWrtBase();
+% disp('bTt q = 0'); disp(bTt);
 
-% disp("eTt");
-% disp(eTt);
-% disp('bTt q = 0');
-% disp(bTt);
-
-% Define the goal frame and initialize cartesian control
+%% Define the goal frame and initialize cartesian control
 % Goal definition 
 bOg = [0.2; -0.7; 0.3];
 theta = pi/2;
 bRg = YPRToRot([0 theta 0]);
 bTg = [bRg bOg;0 0 0 1]; 
-% disp('bTg')
-% disp(bTg)
 
 % control proportional gain 
 k_a = 0.8;
 k_l = 0.8;
 
 % Cartesian control initialization
-cc = cartesianControl(gm, k_a,k_l);
+cc = cartesianControl(gm, k_a, k_l);
 
-% --- test aerea ---
-pm = plotManipulators(1);
-pm.initMotionPlot(0);
+% Display stuff
+% disp('bTg'); disp(bTg);
 
-for j=1:gm.jointNumber
-    bTi(:,:,j) = gm.getTransformWrtBase(j); 
-    plotFrame(bTi(:,:,j), ' ')
-    axis equal
-    pm.plotIter(bTi)
-end
-plotFrame(bTg, '<T>')
+%% Initial configuration
+q = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
+gm.updateDirectGeometry(q);
 
-% --- end test aera ---
-
-%% Initialize control loop 
-
-% Simulation variables
-samples = 100;
+%% Kinematic Simulation - setup
+% variables
 t_start = 0.0;
 t_end = 10.0;
-dt = (t_end-t_start)/samples;
-t = t_start:dt:t_end; 
+dt = 1e-2;
+t = t_start:dt:t_end;
 
 % preallocation variables
 bTi = zeros(4, 4, gm.jointNumber);
 bri = zeros(3, gm.jointNumber+1);
-
-% joints upper and lower bounds 
-qmin = -3.14 * ones(7,1);
-qmin(6) = 0;
-qmax = +3.14 * ones(7,1);
-qmax(6) = 1;
-
-show_simulation = true;
-pm = plotManipulators(show_simulation);
-pm.initMotionPlot(t, bTg(1:3,4));
-
-%%%%%%% Kinematic Simulation %%%%%%%
-for i = t
-    % Updating transformation matrices for the new configuration 
-
-    % Get the cartesian error given an input goal frame
-
-    % Update the jacobian matrix of the given model
-
-    %% INVERSE KINEMATICS
-    % Compute desired joint velocities 
-    q_dot = ...
-
-    % simulating the robot
-    q = KinematicSimulation(....);
     
-    pm.plotIter(gm, km, i, q_dot);
+%% Kinematic Simulation - main
+i = 1;
+qSteps = q;
+for ti = t
+    km.updateJacobian();
+    eJb = km.J_EEwrtB();
+    x_dot = 0.8*cc.getCartesianReference(bTg);
 
-    if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
+    feasible = 'f';
+
+    for f = 1:gm.jointNumber
+        
+        % complete control:     q_dot = eJb\x_dot;
+        % rotation only:        q_dot = eJb\x_dot(1:3);
+        % translation only:     q_dot = eJb(4:6, :)\x_dot(4:6);
+            
+        q_dot = eJb(4:6, :)\x_dot(4:6);
+        
+        % k_a, k_l;
+
+        % simulating the robot -> q = KinematicSimulation(q, q_dot, dt, q_min, q_max);
+        q = q + q_dot.*dt;
+
+        feasible = 't';
+        
+        for j = 1:length(q)
+            if q(j) > q_max(j)
+                q(j) = q_max(j);
+                eJb(:, j) = zeros(6,1);
+                feasible = 'f';
+            elseif q(j) < q_min(j)
+                q(j) = q_min(j);
+                eJb(:, j) = zeros(6,1);
+                feasible = 'f';
+            end
+        end
+    end
+
+    gm.updateDirectGeometry(q);
+
+    qSteps(:, i) = q;
+
+    i = i+1;
+    
+    % if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
+    if(norm(x_dot(1:3)) < 0.01 || norm(x_dot(4:6)) < 0.01)
         disp('Reached Requested Pose')
         break
     end
-
 end
 
-pm.plotFinalConfig(gm);
+
+%% Motion plot
+show_simulation = true;
+
+% number of intermediate steps that will be plotted
+samples = 10; 
+simIdx = ceil(linspace(1, length(qSteps)-1, samples));
+qSteps = qSteps(:, simIdx);
+
+pm = plotManipulators(show_simulation);
+pm.initMotionPlot(t);
+
+plotFrame(bTg, '<T>')
+hold on
+for i = 1:samples
+    q = qSteps(:, i);
+
+    % Updating transformation matrices for the new configuration 
+    gm.updateDirectGeometry(q)
+
+    % Get the transformation matrix from base to the tool
+    bTe = gm.getTransformWrtBase(length(jointType)); 
+    
+    plotFrame(eye(4), ' ')
+    hold on
+
+    % Plot the motion of the robot 
+    for j=1:gm.jointNumber
+        bTi(:,:,j) = gm.getTransformWrtBase(j); 
+        %plotFrame(bTi(:,:,j), ' ')
+    end
+    pm.plotIter(bTi)
+end
+

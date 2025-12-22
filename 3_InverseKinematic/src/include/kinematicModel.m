@@ -6,7 +6,6 @@ classdef kinematicModel < handle
         gm  % An instance of GeometricModel
         J_EEwrtB   % Jacobian
         J_EEwrtEE
-    
     end
 
     methods
@@ -82,7 +81,6 @@ classdef kinematicModel < handle
 
             % Jacobian expressed in the EE frame
             self.J_EEwrtEE = Ad * self.J_EEwrtB;
-        
         end
     end
 end
