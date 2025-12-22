@@ -27,13 +27,18 @@ classdef cartesianControl < handle
             % x_dot : cartesian reference for inverse kinematic control
             
             bTt = self.gm.getToolTransformWrtBase();
+            tTg = inv(bTt) * bTg;
+            [ht,theta] = RotToAngleAxis(tTg(1:3, 1:3));
+
+            rho_tg = ht*theta;
             rt = bTt(1:3, 4);
-            [ht,~] = RotToAngleAxis(bTt(1:3, 1:3));
-
             rg = bTg(1:3, 4);
-            [hg,~] = RotToAngleAxis(bTg(1:3, 1:3));
+            r_tg = rg - rt;
 
-            x_dot = [ht-hg; rg-rt];
+            b_rho_tg = bTt(1:3, 1:3)*rho_tg;
+            b_r_tg = r_tg;
+
+            x_dot = [b_rho_tg; b_r_tg];
 
         end
     end
