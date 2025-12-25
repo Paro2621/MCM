@@ -64,7 +64,8 @@ bri = zeros(3, gm.jointNumber+1);
     
 %% Kinematic Simulation - main
 i = 1;
-qSteps = q;
+qSteps = [];
+qDotSteps = [];
 for ti = t
     km.updateJacobian();
     eJb = km.J_EEwrtB();
@@ -90,11 +91,9 @@ for ti = t
         q_dot(1:3, :) = k_a*q_dot(1:3, :);
         q_dot(4:6, :) = k_l*q_dot(4:6, :);
 
-        % q_dot = k_l*eJb(4:6, :)\x_dot(4:6);
-
         % simulating the robot -> q = KinematicSimulation(q, q_dot, dt, q_min, q_max);
         q = q + q_dot.*dt;
-
+        
         feasible = 't';
         
         for j = 1:length(q)
@@ -113,6 +112,7 @@ for ti = t
     gm.updateDirectGeometry(q);
 
     qSteps(:, i) = q;
+    qDotSteps(:, i) = q_dot;
 
     i = i+1;
     
@@ -122,6 +122,26 @@ for ti = t
         break
     end
 end
+
+%% Joint velocity plot
+
+% --- Joint Positions ---
+subplot(1,2,1)
+plot(t(1:i-1), qSteps', '-')
+legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
+xlabel('Time (s)')
+ylabel('\theta (rad)')
+title('Joint Positions')
+grid on
+
+% --- Joint Velocities ---
+subplot(1,2,2)
+plot(t(1:i-1), qDotSteps', '-')
+legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
+xlabel('Time (s)')
+ylabel('d\theta/dt (rad/s)')
+title('Joint Velocities')
+grid on
 
 
 %% Motion plot
