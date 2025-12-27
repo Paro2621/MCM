@@ -10,7 +10,7 @@ function [h,theta] = RotToAngleAxis(R)
         theta = acos((trace(R)-1)/2);
 
         if kEq(theta, 0)
-            h = [0; 0; 0];
+            h = [1; 0; 0];
         elseif kEq(theta, pi)
              ii = find(diag(R)+1>0);
             

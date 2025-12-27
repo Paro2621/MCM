@@ -11,14 +11,16 @@ addpath('utils/factory');
 iTj_0 = BuildTree();
 
 % Define the tool frame rigidly attached to the end-effector
-eRt = eye(3);
-e_r_te = [0 0 0]';
+eRt = YPRToRot(pi/10, 0, pi/6);
+e_r_te = [0.3 0.1 0]';
 eTt = tFactory(eRt, e_r_te);
+
 
 % Define joints type, upper and lower bounds 
 jointType = [0 0 0 0 0 1 0];
 q_min = -3.14 * ones(7,1);  q_min(6) = 0;
-q_max = 3.14 * ones(7,1);   q_max(6) = 1;
+q_max =  3.14 * ones(7,1);  q_max(6) = 1;
+q_dot_max = 0.4.*ones(7,1);
 
 % Initialization of geometric and kinematic model
 gm = geometricModel(iTj_0, jointType, q_min, q_max, eTt);
@@ -30,12 +32,32 @@ km = kinematicModel(gm);
 % bTt = gm.getToolTransformWrtBase();
 % disp('bTt q = 0'); disp(bTt);
 
+%% Geometric model check
+% q = [0 0 0 0 0 0 0]';
+% 
+% % Updating transformation matrices for the new configuration 
+% gm.updateDirectGeometry(q)
+% 
+% figure(1)
+% plotFrame(eye(4), '<b>')
+% hold on
+% axis equal
+% 
+% % Plot the motion of the robot 
+% for j=1:gm.jointNumber
+%     bTi = gm.getTransformWrtBase(j); 
+%     plotFrame(bTi, "<" +int2str(j) +">")
+% end
+% 
+% bTt = gm.getToolTransformWrtBase();
+% plotFrame(bTt, '<tool>')
+
 %% Define the goal frame and initialize cartesian control
 % Goal definition 
 bOg = [0.2; -0.7; 0.3];
 theta = pi/2;
 bRg = YPRToRot([0 theta 0]);
-bTg = [bRg bOg;0 0 0 1]; 
+bTg = [bRg bOg;0 0 0 1];
 
 % control proportional gain 
 k_a = 0.8;
@@ -46,6 +68,7 @@ cc = cartesianControl(gm, k_a, k_l);
 
 % Display stuff
 % disp('bTg'); disp(bTg);
+% plotFrame(bTg, '<target>')
 
 %% Initial configuration
 q = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
@@ -64,60 +87,68 @@ bri = zeros(3, gm.jointNumber+1);
     
 %% Kinematic Simulation - main
 i = 1;
-qSteps = [];
-qDotSteps = [];
+qSteps = q;
+qDotSteps = zeros(7,1);
+
 for ti = t
     km.updateJacobian();
     eJb = km.J_EEwrtB();
-    x_dot = 0.8*cc.getCartesianReference(bTg);
+    x_dot = cc.getCartesianReferenceEE(bTg);
 
-    feasible = 'f';
+    feasible = false;
 
     for f = 1:gm.jointNumber
-        
-        % Possible controlling actions
-        % translation only:     
-        %   q_dot = k_l*eJb(4:6, :)\x_dot(4:6);
-        %
-        % rotation only:        
-        %   q_dot = k_a*eJb\x_dot(1:3);
-        %
-        % complete control:     
-        %   q_dot = eJb\x_dot;
-        %   q_dot(1:3, :) = k_a*q_dot(1:3, :)
-        %   q_dot(4:6, :) = k_l*q_dot(4:6, :)
-        
-        q_dot = eJb\x_dot;
-        q_dot(1:3, :) = k_a*q_dot(1:3, :);
-        q_dot(4:6, :) = k_l*q_dot(4:6, :);
+        if ~feasible
+            q_dot = eJb\x_dot;
 
-        % simulating the robot -> q = KinematicSimulation(q, q_dot, dt, q_min, q_max);
-        q = q + q_dot.*dt;
-        
-        feasible = 't';
-        
-        for j = 1:length(q)
-            if q(j) > q_max(j)
-                q(j) = q_max(j);
-                eJb(:, j) = zeros(6,1);
-                feasible = 'f';
-            elseif q(j) < q_min(j)
-                q(j) = q_min(j);
-                eJb(:, j) = zeros(6,1);
-                feasible = 'f';
+            q_dot(1:3, :) = k_a*q_dot(1:3, :);
+            q_dot(4:6, :) = k_l*q_dot(4:6, :);
+            
+            % % q_dot max check
+            % for j = 1:length(q_dot) 
+            %     if abs(q_dot(j)) > q_dot_max(j)
+            %         q_dot(j) = sign(q_dot(j))*q_dot_max(j);
+            %     end
+            % end
+            % 
+            % % q_ddot max check
+            % for j = 1:length(q_dot) 
+            %     if abs(q_dot(j)) > q_dot_max(j)
+            %         q_dot(j) = sign(q_dot(j))*q_dot_max(j);
+            %     end
+            % end
+
+            q_sim = q + q_dot.*dt;
+            
+            feasible = true;
+
+            for j = 1:length(q_sim)
+                if q_sim(j) > q_max(j)
+                    q_sim(j) = q_max(j);
+                    q_dot(j) = 0;
+                    eJb(:, j) = zeros(6,1);
+                    feasible = false;
+
+                elseif q_sim(j) < q_min(j)
+                    q_sim(j) = q_min(j);
+                    q_dot(j) = 0;
+                    eJb(:, j) = zeros(6,1);
+                    feasible = false;
+                end
             end
         end
     end
 
-    gm.updateDirectGeometry(q);
+    q = q + q_dot.*dt;
 
+    gm.updateDirectGeometry(q);
+    
+    i = i + 1;
     qSteps(:, i) = q;
     qDotSteps(:, i) = q_dot;
-
-    i = i+1;
     
-    % if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
-    if(norm(x_dot(1:3)) < 0.01 || norm(x_dot(4:6)) < 0.01)
+    % if(norm(x_dot(1:3)) < 0.01 || norm(x_dot(4:6)) < 0.01)
+    if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
         disp('Reached Requested Pose')
         break
     end
@@ -125,21 +156,24 @@ end
 
 %% Joint velocity plot
 
+t = t(1:length(qSteps));
+
+figure(2)
 % --- Joint Positions ---
 subplot(1,2,1)
-plot(t(1:i-1), qSteps', '-')
+plot(t, qSteps', '-')
 legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
 xlabel('Time (s)')
-ylabel('\theta (rad)')
+ylabel('\theta')
 title('Joint Positions')
 grid on
 
 % --- Joint Velocities ---
 subplot(1,2,2)
-plot(t(1:i-1), qDotSteps', '-')
+plot(t, qDotSteps', '-')
 legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
 xlabel('Time (s)')
-ylabel('d\theta/dt (rad/s)')
+ylabel('d\theta/dt')
 title('Joint Velocities')
 grid on
 
@@ -151,12 +185,12 @@ show_simulation = true;
 samples = 10; 
 
 % % linear spacing:       
-% simIdx = ceil(linspace(1, length(qSteps)-1, samples))
+% simIdx = ceil(linspace(1, length(qSteps)-1, samples));
 
 % exponential spacing:
 idx_max = 4;    % trial-and-error, nel caso base 4 o 5 vanno bene
 idx = linspace(1, idx_max, samples);
-simIdx = [1, floor((exp(idx)/exp(idx_max))*length(qSteps))];
+simIdx = [1, floor((exp(idx)/exp(idx_max))*length(qSteps)), length(qSteps)];
 
 qSteps = qSteps(:, simIdx);
 
@@ -180,9 +214,11 @@ for i = 1:samples
     % Plot the motion of the robot 
     for j=1:gm.jointNumber
         bTi(:,:,j) = gm.getTransformWrtBase(j); 
-        %plotFrame(bTi(:,:,j), ' ')
     end
-    plotFrame(bTi(:,:,end), ' ')
+
     pm.plotIter(bTi)
+
+    bTt = gm.getTransformWrtBase(gm.jointNumber);
+    plotFrame(bTt, 'EE')
 end
 

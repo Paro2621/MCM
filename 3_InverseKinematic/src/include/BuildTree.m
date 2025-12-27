@@ -15,10 +15,10 @@ function [iTj_0] = BuildTree()
     j = [0 1 0]';
     k = [0 0 1]';
 
-    iTj_0(:, :, 1) = tFactory([i j k], k.*0.105);   % <1>
-    iTj_0(:, :, 2) = tFactory([k i j], k.*0.110);   % <2>
-    iTj_0(:, :, 3) = tFactory([k -j i], i.*0.100);   % <3>
-    iTj_0(:, :, 4) = tFactory([k -j i], k.*0.325);   % <4>
+    iTj_0(:, :, 1) = tFactory([i j k],   k.*0.105);   % <1>
+    iTj_0(:, :, 2) = tFactory([k i j],   k.*0.110);   % <2>
+    iTj_0(:, :, 3) = tFactory([k -j i],  i.*0.100);   % <3>
+    iTj_0(:, :, 4) = tFactory([k -j i],  k.*0.325);   % <4>
     iTj_0(:, :, 5) = tFactory([-j -k i], i.*0.095);   % <5>
     iTj_0(:, :, 6) = tFactory([-i -j k], k.*0.095);   % <6>
     iTj_0(:, :, 7) = tFactory([k -i -j], k.*0.355);   % <7> = <EE>
