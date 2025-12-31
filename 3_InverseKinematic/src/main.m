@@ -20,7 +20,6 @@ eTt = tFactory(eRt, e_r_te);
 jointType = [0 0 0 0 0 1 0];
 q_min = -3.14 * ones(7,1);  q_min(6) = 0;
 q_max =  3.14 * ones(7,1);  q_max(6) = 1;
-q_dot_max = 0.4.*ones(7,1);
 
 % Initialization of geometric and kinematic model
 gm = geometricModel(iTj_0, jointType, q_min, q_max, eTt);
@@ -71,8 +70,8 @@ cc = cartesianControl(gm, k_a, k_l);
 % plotFrame(bTg, '<target>')
 
 %% Initial configuration
-q = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
-gm.updateDirectGeometry(q);
+q0 = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
+gm.updateDirectGeometry(q0);
 
 %% Kinematic Simulation - setup
 % variables
@@ -87,8 +86,11 @@ bri = zeros(3, gm.jointNumber+1);
     
 %% Kinematic Simulation - main
 i = 1;
-qSteps = q;
+qSteps = q0;
+q = q0;
 qDotSteps = zeros(7,1);
+
+reachedRequestPose = false;
 
 for ti = t
     km.updateJacobian();
@@ -103,20 +105,6 @@ for ti = t
 
             q_dot(1:3, :) = k_a*q_dot(1:3, :);
             q_dot(4:6, :) = k_l*q_dot(4:6, :);
-            
-            % % q_dot max check
-            % for j = 1:length(q_dot) 
-            %     if abs(q_dot(j)) > q_dot_max(j)
-            %         q_dot(j) = sign(q_dot(j))*q_dot_max(j);
-            %     end
-            % end
-            % 
-            % % q_ddot max check
-            % for j = 1:length(q_dot) 
-            %     if abs(q_dot(j)) > q_dot_max(j)
-            %         q_dot(j) = sign(q_dot(j))*q_dot_max(j);
-            %     end
-            % end
 
             q_sim = q + q_dot.*dt;
             
@@ -147,9 +135,9 @@ for ti = t
     qSteps(:, i) = q;
     qDotSteps(:, i) = q_dot;
     
-    % if(norm(x_dot(1:3)) < 0.01 || norm(x_dot(4:6)) < 0.01)
     if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
         disp('Reached Requested Pose')
+        reachedRequestPose = true;
         break
     end
 end
@@ -160,7 +148,7 @@ t = t(1:length(qSteps));
 
 figure(2)
 % --- Joint Positions ---
-subplot(1,2,1)
+subplot(1,3,1)
 plot(t, qSteps', '-')
 legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
 xlabel('Time (s)')
@@ -169,7 +157,7 @@ title('Joint Positions')
 grid on
 
 % --- Joint Velocities ---
-subplot(1,2,2)
+subplot(1,3,2)
 plot(t, qDotSteps', '-')
 legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
 xlabel('Time (s)')
@@ -177,12 +165,31 @@ ylabel('d\theta/dt')
 title('Joint Velocities')
 grid on
 
+% --- EE velocity wrt BASE
+v_EEwrtB = [];
+for ti = 1:length(qSteps)
+    gm.updateDirectGeometry(qSteps(:, ti));
+    J_wrtEE = km.J_EEwrtEE;
+    J_wrtBase = km.J_EEwrtB;
 
+    velocities_wrtBase = J_wrtBase*qDotSteps(:, ti);
+    velocities_wrtEE = J_wrtEE*qDotSteps(:, ti);
+
+    v_EEwrtB(:, ti) = velocities_wrtBase;
+end
+
+subplot(1,3,3)
+plot(t, v_EEwrtB', '-')
+% legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
+xlabel('Time (s)')
+ylabel('d\theta/dt')
+title('Velocity of EE wrt Base')
+grid on
 %% Motion plot
 show_simulation = true;
 
 % number of intermediate steps that will be plotted
-samples = 10; 
+samples = 5; 
 
 % % linear spacing:       
 % simIdx = ceil(linspace(1, length(qSteps)-1, samples));
@@ -219,6 +226,6 @@ for i = 1:samples
     pm.plotIter(bTi)
 
     bTt = gm.getTransformWrtBase(gm.jointNumber);
-    plotFrame(bTt, 'EE')
+    plotFrame(bTt, ' ')
 end
 
