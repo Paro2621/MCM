@@ -42,14 +42,26 @@ km = kinematicModel(gm);
 % hold on
 % axis equal
 % 
+% tree = []; 
+% 
 % % Plot the motion of the robot 
 % for j=1:gm.jointNumber
 %     bTi = gm.getTransformWrtBase(j); 
+%     tree(:, :, j) = bTi;
 %     plotFrame(bTi, "<" +int2str(j) +">")
 % end
 % 
 % bTt = gm.getToolTransformWrtBase();
+% tree(:, :, gm.jointNumber+1) = bTt;
 % plotFrame(bTt, '<tool>')
+% 
+% 
+% x_coords = squeeze(tree(1, 4, :));
+% y_coords = squeeze(tree(2, 4, :));
+% z_coords = squeeze(tree(3, 4, :));
+% 
+% line(x_coords(1:end-1), y_coords(1:end-1), z_coords(1:end-1), 'LineWidth', 1.5, 'Color', 'w')
+% line(x_coords(end-1:end), y_coords(end-1:end), z_coords(end-1:end), 'LineWidth', 1.5, 'Color', 'w', 'LineStyle','--')
 
 %% Define the goal frame and initialize cartesian control
 % Goal definition 
@@ -95,17 +107,27 @@ reachedRequestPose = false;
 for ti = t
     km.updateJacobian();
     eJb = km.J_EEwrtB();
-    x_dot = cc.getCartesianReferenceEE(bTg);
+    
+    % TEST: lock prismatic
+    % eJb(:, 6) = zeros(6,1);
+    
+    [x, x_dot] = cc.getCartesianReferenceEE(bTg);
     
     qLocked = zeros(gm.jointNumber,1);
     qDotLocked = zeros(gm.jointNumber,1);
 
     for f = 1:gm.jointNumber
 
-        q_dot = eJb\x_dot;
+        % TEST: pasudoinverse built-in
+        % q_dot = pinv(eJb)*x_dot;
 
-        q_dot(1:3, :) = k_a*q_dot(1:3, :);
-        q_dot(4:6, :) = k_l*q_dot(4:6, :);
+        % pseudoinverse
+        [U, S, V] = svd(eJb);
+        pinvJ = V*[diag(1./diag(S)); zeros(1, 6)]*U';
+        q_dot = pinvJ * x_dot;
+
+        % TEST: alternative 
+        % q_dot = eJb\x_dot;
 
         q_sim = q + q_dot.*dt;
 
@@ -127,7 +149,6 @@ for ti = t
 
     for j = 1:gm.jointNumber
         if qDotLocked(j) ~= 0
-            disp("change done")
             q_dot(j) = qDotLocked(j);
             q(j) = qLocked(j);
         end
@@ -138,9 +159,9 @@ for ti = t
     i = i + 1;
     qSteps(:, i) = q;
     qDotSteps(:, i) = q_dot;
-    
-    if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
-        disp('Reached Requested Pose')
+
+    if(norm(x(1:3)) < 0.01 && norm(x(4:6)) < 0.01)
+        disp("goal reached")
         reachedRequestPose = true;
         break
     end
@@ -148,7 +169,7 @@ end
 
 %% Joint velocity plot
 
-t = t(1:length(qSteps));
+t =[0, t(1:length(qSteps)-1)];
 
 figure(2)
 % --- Joint Positions ---
@@ -189,6 +210,7 @@ xlabel('Time (s)')
 ylabel('d\theta/dt')
 title('Velocity of EE wrt Base')
 grid on
+
 %% Motion plot
 show_simulation = true;
 

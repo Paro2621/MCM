@@ -20,7 +20,7 @@ classdef cartesianControl < handle
             end
         end
 
-        function x_dot = getCartesianReferenceEE(self, bTg)
+        function [x, x_dot] = getCartesianReferenceEE(self, bTg)
             % getCartesianReference function
             % Inputs :
             % bTg : goal frame
@@ -40,10 +40,11 @@ classdef cartesianControl < handle
             b_rho_eg = bTe(1:3, 1:3)*rho_eg;
             b_r_eg = r_eg;
 
-            x_dot = [b_rho_eg; b_r_eg];
+            x = [b_rho_eg; b_r_eg];
+            x_dot = [self.k_a.*b_rho_eg; self.k_l.*b_r_eg];
         end
 
-        function x_dot = getCartesianReferenceTool(self,bTg)
+        function [x, x_dot] = getCartesianReferenceTool(self,bTg)
             % getCartesianReference function
             % Inputs :
             % bTg : goal frame
@@ -62,8 +63,9 @@ classdef cartesianControl < handle
 
             b_rho_tg = bTt(1:3, 1:3)*rho_tg;
             b_r_tg = r_tg;
-
-            x_dot = [b_rho_tg; b_r_tg];
+            
+            x = [b_rho_eg; b_r_eg];
+            x_dot = [self.k_a.*b_rho_tg; self.k_l.*b_r_tg];
         end
     end
 end
