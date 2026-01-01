@@ -88,7 +88,7 @@ bri = zeros(3, gm.jointNumber+1);
 i = 1;
 qSteps = q0;
 q = q0;
-qDotSteps = zeros(7,1);
+qDotSteps = zeros(gm.jointNumber,1);
 
 reachedRequestPose = false;
 
@@ -96,38 +96,42 @@ for ti = t
     km.updateJacobian();
     eJb = km.J_EEwrtB();
     x_dot = cc.getCartesianReferenceEE(bTg);
-
-    feasible = false;
+    
+    qLocked = zeros(gm.jointNumber,1);
+    qDotLocked = zeros(gm.jointNumber,1);
 
     for f = 1:gm.jointNumber
-        if ~feasible
-            q_dot = eJb\x_dot;
 
-            q_dot(1:3, :) = k_a*q_dot(1:3, :);
-            q_dot(4:6, :) = k_l*q_dot(4:6, :);
+        q_dot = eJb\x_dot;
 
-            q_sim = q + q_dot.*dt;
-            
-            feasible = true;
+        q_dot(1:3, :) = k_a*q_dot(1:3, :);
+        q_dot(4:6, :) = k_l*q_dot(4:6, :);
 
-            for j = 1:length(q_sim)
-                if q_sim(j) > q_max(j)
-                    q_sim(j) = q_max(j);
-                    q_dot(j) = 0;
-                    eJb(:, j) = zeros(6,1);
-                    feasible = false;
+        q_sim = q + q_dot.*dt;
 
-                elseif q_sim(j) < q_min(j)
-                    q_sim(j) = q_min(j);
-                    q_dot(j) = 0;
-                    eJb(:, j) = zeros(6,1);
-                    feasible = false;
-                end
+        for j = 1:length(q_sim)
+            if q_sim(j) > q_max(j)
+                qLocked(j) = q_max(j);
+                qDotLocked(j) = (q_max(j) - q(j)) / dt;
+                eJb(:, j) = zeros(6,1);
+            elseif q_sim(j) < q_min(j)
+                qLocked(j) = q_min(j);
+                qDotLocked(j) = (q_min(j) - q(j)) / dt;
+                eJb(:, j) = zeros(6,1);
             end
         end
+
     end
 
-    q = q + q_dot.*dt;
+    q = q_sim;
+
+    for j = 1:gm.jointNumber
+        if qDotLocked(j) ~= 0
+            disp("change done")
+            q_dot(j) = qDotLocked(j);
+            q(j) = qLocked(j);
+        end
+    end
 
     gm.updateDirectGeometry(q);
     
@@ -180,7 +184,7 @@ end
 
 subplot(1,3,3)
 plot(t, v_EEwrtB', '-')
-% legend('r1','r2','r3','r4','r5','l1','r6', 'Location', 'best')
+legend('\omega_x','\omega_y','\omega_z','v_x','v_y','v_z', 'Location', 'best')
 xlabel('Time (s)')
 ylabel('d\theta/dt')
 title('Velocity of EE wrt Base')
