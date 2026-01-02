@@ -58,6 +58,41 @@ classdef kinematicModel < handle
             end
         end
 
+        function bJi = getJacobianOfToolWrtBase(self)
+            %%% getJacobianOfJointWrtBase
+            % This method computes the Jacobian matrix bJi of joint i wrt base.
+            % Inputs:
+            % i : joint indnex ;
+
+            % The function returns:
+            % bJi
+            
+            for i = 1:self.gm.jointNumber
+                fwdGeo(:, :, i) = self.gm.getTransformWrtBase(i);
+            end
+            fwdGeo(:, :, end+1) = fwdGeo(:, :, end)*self.gm.lastjoint_T_tool();
+
+            bJi  = [];
+            
+            r_end = fwdGeo(1:3, 4, end);
+
+            % all the other joints
+            for i = 1:self.gm.jointNumber
+                currentFrame = fwdGeo(:, :, i); % wrt base
+
+                k_i = currentFrame(1:3, 3);
+                r_i = r_end - currentFrame(1:3, 4);
+
+                if self.gm.jointType(i) == 0        % revolute
+                    J_i = [k_i; cross(k_i, r_i)];
+                    bJi = [bJi J_i];
+                elseif self.gm.jointType(i) == 1    % prismatic
+                    J_i = [0; 0; 0; k_i];
+                    bJi = [bJi J_i];
+                end
+            end
+        end
+
         function updateJacobian(self)
             %%% Update Jacobian function 
             % The function update: 
