@@ -34,8 +34,8 @@ bTe = gm.getToolTransformWrtBase()
 % disp('bTt q = 0'); disp(bTt);
 
 %% Geometric model check
-q = [0 0 0 0 0 0 0]';
-
+% q = [0 0 0 0 0 0 0]';
+% 
 % Updating transformation matrices for the new configuration 
 % gm.updateDirectGeometry(q)
 % 
@@ -94,8 +94,8 @@ gm.updateDirectGeometry(q0);
 %% Kinematic Simulation - setup
 % variables
 t_start = 0.0;
-t_end = 10.0;
-dt = 1e-2;
+t_end = 20.0;
+dt = 1e-3;
 t = t_start:dt:t_end;
 
 % preallocation variables
@@ -103,67 +103,58 @@ bTi = zeros(4, 4, gm.jointNumber);
 bri = zeros(3, gm.jointNumber+1);
  
 %% Kinematic Simulation - main
-i = 1;
-qSteps = q0;
 q = q0;
+qSteps = q0;
 qDotSteps = zeros(gm.jointNumber,1);
 xDotSteps = zeros(6,1);
 
 reachedRequestPose = false;
 
-for ti = t
-    km.updateJacobian();
-    % J = km.J_EEwrtB();
+for i = 2:length(t)
+    km.updateJacobian();    
+
     J = km.J_TwrtB;
 
     [x, x_dot] = cc.getCartesianReferenceTool(bTg);
-    xDotSteps = [xDotSteps, x_dot];
     
-    qLocked = zeros(gm.jointNumber,1);
-    qDotLocked = zeros(gm.jointNumber,1);
+    % --- Null-space projection -------------------------------------------
+    % % 1. Calculate primary movement
+    % J_pinv = pinv(J);
+    % q_dot_task = J_pinv * x_dot;
+    % 
+    % % 2. Define a "Push" toward the center of joint limits
+    % q_center = (gm.q_max + gm.q_min) / 2;
+    % gain = 50; 
+    % q_dot_null = gain * (q_center - q); % Move toward middle of range
+    % 
+    % % 3. Project null space (I - J+ * J)
+    % I = eye(gm.jointNumber);
+    % q_dot = q_dot_task + (I - J_pinv * J) * q_dot_null;
 
-    for f = 1:gm.jointNumber
 
-        q_dot = pinv(J)*x_dot;
+    % --- Clamp -----------------------------------------------------------
+    q_dot = pinv(J)*x_dot;
+    q = q + q_dot * dt;
+    
+    % Clamp positions
+    q = max(min(q, gm.q_max), gm.q_min);
+    
+    % If a joint is at the limit, kill its velocity for the next step
+    q_dot(q >= gm.q_max & q_dot > 0) = 0;
+    q_dot(q <= gm.q_min & q_dot < 0) = 0;
 
-        for j = 1:gm.jointNumber
-            if qDotLocked(j) ~= 0
-                q_dot(j) = qDotLocked(j);
-                q(j) = qLocked(j);
-            end
-        end
+    % --- No restraints ---------------------------------------------------
+    % q_dot = pinv(J)*x_dot;
 
-        q_sim = q + q_dot.*dt;
-
-        % for j = 1:length(q_sim)
-        %     if q_sim(j) > q_max(j)
-        %         qLocked(j) = q_max(j);
-        %         qDotLocked(j) = (q_max(j) - q(j)) / dt;
-        %         eJb(:, j) = zeros(6,1);
-        %     elseif q_sim(j) < q_min(j)
-        %         qLocked(j) = q_min(j);
-        %         qDotLocked(j) = (q_min(j) - q(j)) / dt;
-        %         eJb(:, j) = zeros(6,1);
-        %     end
-        % end
-    end
-
-    q = q_sim;
-
-    for j = 1:gm.jointNumber
-        if qDotLocked(j) ~= 0
-            q_dot(j) = qDotLocked(j);
-            q(j) = qLocked(j);
-        end
-    end
+    q = q + q_dot.*dt;
 
     gm.updateDirectGeometry(q);
-    
-    i = i + 1;
+
     qSteps(:, i) = q;
     qDotSteps(:, i) = q_dot;
+    xDotSteps(:, i) = x_dot;
 
-    if(norm(x(1:3)) < 0.01 && norm(x(4:6)) < 0.001)
+    if(norm(x(1:3)) < 0.01 && norm(x(4:6)) < 0.01)
         disp("goal reached")
         reachedRequestPose = true;
         break
@@ -262,15 +253,15 @@ grid on
 show_simulation = true;
 
 % number of intermediate steps that will be plotted
-samples = 30; 
+samples = 10; 
 
 % linear spacing:       
-simIdx = ceil(linspace(1, length(qSteps)-1, samples));
+% simIdx = ceil(linspace(1, length(qSteps)-1, samples));
 
 % exponential spacing:
-% idx_max = 3.5;    % trial-and-error, nel caso base con 10 samples 4 o 5 vanno bene
-% idx = linspace(1, idx_max, samples);
-% simIdx = [1, floor((exp(idx)/exp(idx_max))*length(qSteps)), length(qSteps)];
+idx_max = 5.5;    % trial-and-error, nel caso base con 10 samples 4 o 5 vanno bene
+idx = linspace(1, idx_max, samples);
+simIdx = [1, floor((exp(idx)/exp(idx_max))*length(qSteps)), length(qSteps)];
 
 qSteps = qSteps(:, simIdx);
 
