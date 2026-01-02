@@ -15,13 +15,13 @@ classdef geometricModel < handle
         jointNumber
         iTj
         q
-        lastjoint_T_tool
+        e_T_g
         q_min
         q_max
     end
 
     methods
-        function self = geometricModel(iTj_0, jointType, q_min, q_max, lastjoint_T_tool)
+        function self = geometricModel(iTj_0, jointType, q_min, q_max, e_T_g)
             %%% Constructor to initialize the geomModel property
             
             if nargin > 1
@@ -30,7 +30,7 @@ classdef geometricModel < handle
                 self.jointType = jointType;
                 self.jointNumber = length(jointType);
                 self.q = zeros(self.jointNumber,1);
-                self.lastjoint_T_tool = lastjoint_T_tool;
+                self.e_T_g = e_T_g;
                 self.q_min = q_min;
                 self.q_max = q_max;
             else
@@ -77,8 +77,8 @@ classdef geometricModel < handle
             % bTt : transformation matrix from the manipulator base to the 
             % end effector in the current [iTj] configuration.
             
-            b_T_lastjoint = getTransformWrtBase(self,self.jointNumber);
-            bTt = b_T_lastjoint*self.lastjoint_T_tool;
+            b_T_e = getTransformWrtBase(self,self.jointNumber);
+            bTt = b_T_e*self.e_T_g;
         end        
     end
 end

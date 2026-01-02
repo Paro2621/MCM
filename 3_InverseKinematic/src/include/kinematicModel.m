@@ -6,6 +6,7 @@ classdef kinematicModel < handle
         gm  % An instance of GeometricModel
         J_EEwrtB   % Jacobian
         J_EEwrtEE
+        J_TwrtB
     end
 
     methods
@@ -70,7 +71,7 @@ classdef kinematicModel < handle
             for i = 1:self.gm.jointNumber
                 fwdGeo(:, :, i) = self.gm.getTransformWrtBase(i);
             end
-            fwdGeo(:, :, end+1) = fwdGeo(:, :, end)*self.gm.lastjoint_T_tool();
+            fwdGeo(:, :, end+1) = fwdGeo(:, :, end)*self.gm.e_T_g();
 
             bJi  = [];
             
@@ -108,11 +109,13 @@ classdef kinematicModel < handle
             e_T_b = invert(b_T_e);
 
             R = e_T_b(1:3, 1:3);
+            p = e_T_b(1:3, 4);
             
-            twistR = [R, zeros(3,3); zeros(3,3), R];
+            Ad = [R, zeros(3,3); skew(p)*R, R];
 
             % Jacobian expressed in the EE frame
-            self.J_EEwrtEE = twistR * self.J_EEwrtB;
+            self.J_EEwrtEE = Ad * self.J_EEwrtB;
+            self.J_TwrtB =  self.getJacobianOfToolWrtBase();
         end
     end
 end
