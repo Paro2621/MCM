@@ -13,7 +13,7 @@ iTj_0 = BuildTree();
 % Define the tool frame rigidly attached to the end-effector
 eRt = YPRToRot(pi/10, 0, pi/6);
 e_r_te = [0.3 0.1 0]';
-eTt = tFactory(eRt, e_r_te)
+eTt = tFactory(eRt, e_r_te);
 iTj_0(:, :, end+1) = eTt;
 
 % Define joints type, upper and lower bounds 
@@ -25,7 +25,11 @@ q_max =  3.14 * ones(7,1);  q_max(6) = 1;
 gm = geometricModel(iTj_0, jointType, q_min, q_max, eTt);
 km = kinematicModel(gm);
 
-bTe = gm.getToolTransformWrtBase()
+%% Initial configuration
+q0 = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
+gm.updateDirectGeometry(q0);
+
+bTt = gm.getToolTransformWrtBase
 
 % Display stuff
 % disp('iTj_0'); disp(iTj_0);
@@ -36,7 +40,7 @@ bTe = gm.getToolTransformWrtBase()
 %% Geometric model check
 % q = [0 0 0 0 0 0 0]';
 % 
-% Updating transformation matrices for the new configuration 
+% % Updating transformation matrices for the new configuration 
 % gm.updateDirectGeometry(q)
 % 
 % figure(1)
@@ -63,13 +67,13 @@ bTe = gm.getToolTransformWrtBase()
 % z_coords = squeeze(tree(3, 4, :));
 % 
 % line(x_coords(1:end-1), y_coords(1:end-1), z_coords(1:end-1), ...
-%     'LineWidth', 1, 'Color', 'w', 'Marker','o')
+%     'LineWidth', 1, 'Color', 'black', 'Marker','o')
 % line(x_coords(end-1:end), y_coords(end-1:end), z_coords(end-1:end), ...
-%     'LineWidth', 1, 'Color', 'w', 'Marker','+', 'LineStyle','--')
+%     'LineWidth', 1, 'Color', 'black', 'Marker','+', 'LineStyle','--')
 
 %% Define the goal frame and initialize cartesian control
 % Goal definition 
-bOg = [0.2; -0.7; 0.3];
+bOg = [0.2; -0.8; 0.3];
 theta = pi/2;
 bRg = YPRToRot([0 theta 0]);
 bTg = [bRg bOg;0 0 0 1];
@@ -81,20 +85,59 @@ k_l = 0.8;
 % Cartesian control initialization
 cc = cartesianControl(gm, k_a, k_l);
 disp("initial error and EE velocity")
-[x, x_dot] = cc.getCartesianReferenceEE(bTg)
+[x, x_dot] = cc.getCartesianReferenceTool(bTg)
+
+% check = bTt(1:3, 4) + x(4:6)
 
 % Display stuff
 % disp('bTg'); disp(bTg);
 % plotFrame(bTg, '<target>')
 
-%% Initial configuration
-q0 = [pi/2, -pi/4, 0, -pi/4, 0, 0.15, pi/4]';
-gm.updateDirectGeometry(q0);
+%% Geometric model check
+% 
+% % Updating transformation matrices for the new configuration 
+% gm.updateDirectGeometry(q0)
+% 
+% figure(1)
+% plotFrame(eye(4), '<b>')
+% hold on
+% axis equal
+% 
+% tree = []; 
+% 
+% % Plot the motion of the robot 
+% for j=1:gm.jointNumber
+%     bTi = gm.getTransformWrtBase(j); 
+%     tree(:, :, j) = bTi;
+%     plotFrame(bTi, "<" +int2str(j) +">")
+% end
+% 
+% bTt = gm.getToolTransformWrtBase();
+% tree(:, :, gm.jointNumber+1) = bTt;
+% plotFrame(bTt, '<tool>')
+% 
+% 
+% x_coords = squeeze(tree(1, 4, :));
+% y_coords = squeeze(tree(2, 4, :));
+% z_coords = squeeze(tree(3, 4, :));
+% 
+% line(x_coords(1:end-1), y_coords(1:end-1), z_coords(1:end-1), ...
+%     'LineWidth', 1, 'Color', 'w', 'Marker','o')
+% 
+% line(x_coords(end-1:end), y_coords(end-1:end), z_coords(end-1:end), ...
+%     'LineWidth', 1, 'Color', 'w', 'Marker','+', 'LineStyle','--')
+% 
+% line([bTt(1, 4) bTt(1, 4)+x(4)],...
+%      [bTt(2, 4) bTt(2, 4)+x(5)],...
+%      [bTt(3, 4) bTt(3, 4)+x(6)], ...
+%      'LineWidth', 1, 'Color', 'r', 'LineStyle','--')
+% 
+% plotFrame(bTg, '<T>')
 
 %% Kinematic Simulation - setup
 % variables
 t_start = 0.0;
-t_end = 20.0;
+t_end = 10.0;
 dt = 1e-3;
 t = t_start:dt:t_end;
 
@@ -117,21 +160,6 @@ for i = 2:length(t)
 
     [x, x_dot] = cc.getCartesianReferenceTool(bTg);
     
-    % --- Null-space projection -------------------------------------------
-    % % 1. Calculate primary movement
-    % J_pinv = pinv(J);
-    % q_dot_task = J_pinv * x_dot;
-    % 
-    % % 2. Define a "Push" toward the center of joint limits
-    % q_center = (gm.q_max + gm.q_min) / 2;
-    % gain = 50; 
-    % q_dot_null = gain * (q_center - q); % Move toward middle of range
-    % 
-    % % 3. Project null space (I - J+ * J)
-    % I = eye(gm.jointNumber);
-    % q_dot = q_dot_task + (I - J_pinv * J) * q_dot_null;
-
-
     % --- Clamp -----------------------------------------------------------
     q_dot = pinv(J)*x_dot;
     q = q + q_dot * dt;
@@ -145,8 +173,7 @@ for i = 2:length(t)
 
     % --- No restraints ---------------------------------------------------
     % q_dot = pinv(J)*x_dot;
-
-    q = q + q_dot.*dt;
+    % q = q + q_dot.*dt;
 
     gm.updateDirectGeometry(q);
 
@@ -154,15 +181,16 @@ for i = 2:length(t)
     qDotSteps(:, i) = q_dot;
     xDotSteps(:, i) = x_dot;
 
-    if(norm(x(1:3)) < 0.01 && norm(x(4:6)) < 0.01)
+    if(norm(x_dot(1:3)) < 0.01 && norm(x_dot(4:6)) < 0.01)
         disp("goal reached")
         reachedRequestPose = true;
+        disp(t(i))
         break
     end
 end
 
 disp("final error and EE velocity")
-[x, x_dot] = cc.getCartesianReferenceEE(bTg)
+[x, x_dot] = cc.getCartesianReferenceTool(bTg)
 
 %% Joint velocity plot
 
@@ -192,6 +220,7 @@ figure(3)
 v_EEwrtB = [];
 for ti = 1:length(qSteps)
     gm.updateDirectGeometry(qSteps(:, ti));
+    km.updateJacobian()
     J_wrtBase = km.J_EEwrtB;
     velocities_wrtBase = J_wrtBase*qDotSteps(:, ti);
     v_EEwrtB(:, ti) = velocities_wrtBase;
@@ -209,6 +238,7 @@ grid on
 v_ToolwrtB = [];
 for ti = 1:length(qSteps)
     gm.updateDirectGeometry(qSteps(:, ti));
+    km.updateJacobian()
     J_ToolwrtBase = km.getJacobianOfToolWrtBase();
     velocities_ToolwrtBase = J_ToolwrtBase*qDotSteps(:, ti);
     v_ToolwrtB(:, ti) = velocities_ToolwrtBase;

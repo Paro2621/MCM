@@ -44,7 +44,7 @@ classdef cartesianControl < handle
             x_dot = [self.k_a.*b_rho_eg; self.k_l.*b_r_eg];
         end
 
-        function [x, x_dot] = getCartesianReferenceTool(self,bTg)
+        function [x, x_dot] = getCartesianReferenceTool(self, bTg)
             % getCartesianReference function
             % Inputs :
             % bTg : goal frame
@@ -54,12 +54,11 @@ classdef cartesianControl < handle
             bTt = self.gm.getToolTransformWrtBase();
 
             tTg = bTt\bTg;
+
             [ht,theta] = RotToAngleAxis(tTg(1:3, 1:3));
 
             rho_tg = ht*theta;
-            rt = bTt(1:3, 4);
-            rg = bTg(1:3, 4);
-            r_tg = rg - rt;
+            r_tg = bTg(1:3, 4) - bTt(1:3, 4);
 
             b_rho_tg = bTt(1:3, 1:3)*rho_tg;
             b_r_tg = r_tg;
@@ -69,4 +68,3 @@ classdef cartesianControl < handle
         end
     end
 end
-

@@ -111,7 +111,7 @@ classdef kinematicModel < handle
             R = e_T_b(1:3, 1:3);
             p = e_T_b(1:3, 4);
             
-            Ad = [R, zeros(3,3); skew(p)*R, R];
+            Ad = [R, zeros(3,3); -skew(p)*R, R];
 
             % Jacobian expressed in the EE frame
             self.J_EEwrtEE = Ad * self.J_EEwrtB;
